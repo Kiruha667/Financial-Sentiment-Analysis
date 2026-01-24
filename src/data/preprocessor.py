@@ -252,8 +252,7 @@ class FinancialTextPreprocessor:
         clean_params = clean_text_params or {}
         logger.info("Cleaning text...")
 
-        tqdm.pandas(desc="Cleaning text")
-        df['sentence_clean'] = df[text_column].progress_apply(
+        df['sentence_clean'] = df[text_column].apply(
             lambda x: self.clean_text(x, **clean_params)
         )
 

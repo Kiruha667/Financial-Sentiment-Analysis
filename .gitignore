@@ -2,6 +2,7 @@
 CLAUDE.md
 
 # IDE
+.claude/
 .idea/
 .vscode/
 *.swp

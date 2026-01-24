@@ -6,11 +6,12 @@ from HuggingFace or local files.
 """
 
 import logging
+import zipfile
 from pathlib import Path
 from typing import Optional, Literal
 
 import pandas as pd
-from datasets import load_dataset, DatasetDict
+from huggingface_hub import hf_hub_download
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -97,25 +98,54 @@ class DataLoader:
         logger.info(f"Loading dataset from HuggingFace: {DATASET_SOURCE}")
         logger.info(f"Configuration: {self.agreement_level}")
 
+        # Map agreement level to filename
+        file_mapping = {
+            "sentences_50agree": "Sentences_50Agree.txt",
+            "sentences_66agree": "Sentences_66Agree.txt",
+            "sentences_75agree": "Sentences_75Agree.txt",
+            "sentences_allagree": "Sentences_AllAgree.txt",
+        }
+
+        # Label mapping from string to int
+        label_to_int = {"negative": 0, "neutral": 1, "positive": 2}
+
         try:
-            dataset = load_dataset(
-                DATASET_SOURCE,
-                self.agreement_level,
-                trust_remote_code=True,
+            # Download the zip file from HuggingFace
+            zip_path = hf_hub_download(
+                repo_id=DATASET_SOURCE,
+                filename="data/FinancialPhraseBank-v1.0.zip",
+                repo_type="dataset",
             )
 
-            # Convert to DataFrame
-            if isinstance(dataset, DatasetDict):
-                # Combine all splits if multiple exist
-                dfs = []
-                for split_name, split_data in dataset.items():
-                    df = pd.DataFrame(split_data)
-                    df['split'] = split_name
-                    dfs.append(df)
-                    logger.info(f"Loaded split '{split_name}': {len(df)} samples")
-                df = pd.concat(dfs, ignore_index=True)
-            else:
-                df = pd.DataFrame(dataset)
+            # Extract and find the correct file
+            filename = file_mapping[self.agreement_level]
+
+            sentences = []
+            labels = []
+
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                # Find the file in the archive
+                for name in zf.namelist():
+                    if name.endswith(filename):
+                        with zf.open(name) as f:
+                            content = f.read().decode("utf-8", errors="replace")
+                            for line in content.split("\n"):
+                                line = line.strip()
+                                if not line:
+                                    continue
+                                # Split from the right to handle @ in sentences
+                                parts = line.rsplit("@", 1)
+                                if len(parts) == 2:
+                                    sentence, label = parts
+                                    sentence = sentence.strip()
+                                    label = label.strip().lower()
+                                    if label in label_to_int:
+                                        sentences.append(sentence)
+                                        labels.append(label_to_int[label])
+                        break
+
+            df = pd.DataFrame({"sentence": sentences, "label": labels})
+            df["split"] = "train"
 
             # Add label names
             df['label_name'] = df['label'].map(LABEL_NAMES)
