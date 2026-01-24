@@ -29,27 +29,37 @@ Source: [HuggingFace Datasets](https://huggingface.co/datasets/takala/financial_
 project/
 ├── config/
 │   ├── __init__.py
-│   ├── paths.py          # Path configurations
-│   └── params.py         # Hyperparameters and constants
+│   ├── paths.py              # Path configurations
+│   ├── params.py             # Hyperparameters and constants
+│   └── model_config.py       # Model configurations (FinBERT, RoBERTa)
 ├── data/
-│   ├── raw/              # Original dataset
-│   ├── processed/        # Preprocessed data
-│   └── README.md         # Dataset documentation
+│   ├── raw/                  # Original dataset
+│   ├── processed/            # Preprocessed data
+│   └── README.md             # Dataset documentation
 ├── notebooks/
 │   └── 01_data_analysis.ipynb  # EDA and analysis (Part 1)
 ├── src/
 │   ├── data/
-│   │   ├── loader.py     # Dataset loading utilities
-│   │   ├── preprocessor.py  # Text preprocessing
-│   │   └── analyzer.py   # Statistical analysis
+│   │   ├── loader.py         # Dataset loading utilities
+│   │   ├── preprocessor.py   # Text preprocessing
+│   │   ├── analyzer.py       # Statistical analysis
+│   │   └── dataset.py        # PyTorch Dataset & DataLoaders
+│   ├── models/
+│   │   ├── classifier.py     # SentimentClassifier model
+│   │   ├── trainer.py        # Training loop & early stopping
+│   │   ├── evaluator.py      # Evaluation metrics & error analysis
+│   │   └── predictor.py      # Production inference wrapper
 │   ├── visualization/
-│   │   └── plots.py      # Visualization functions
+│   │   ├── plots.py          # Data visualization (Part 1)
+│   │   └── training_viz.py   # Training visualization (Part 2)
 │   └── utils/
-│       └── helpers.py    # Utility functions
+│       ├── helpers.py        # Utility functions
+│       └── metrics.py        # Additional metrics (Kappa, MCC, CI)
 ├── outputs/
-│   ├── figures/          # Generated plots
-│   ├── reports/          # Analysis reports
-│   └── logs/             # Application logs
+│   ├── figures/              # Generated plots
+│   ├── models/               # Saved model checkpoints
+│   ├── reports/              # Analysis reports
+│   └── logs/                 # Application logs
 ├── requirements.txt
 └── README.md
 ```
@@ -82,12 +92,6 @@ pip install -r requirements.txt
 
 ### Part 1: Data Analysis
 
-1. Open the analysis notebook:
-```bash
-jupyter notebook notebooks/01_data_analysis.ipynb
-```
-
-2. Or run analysis programmatically:
 ```python
 from src.data import load_financial_phrasebank, FinancialTextPreprocessor, DatasetAnalyzer
 from src.visualization import plot_label_distribution, generate_all_wordclouds
@@ -108,30 +112,255 @@ plot_label_distribution(df_processed, save=True)
 generate_all_wordclouds(df_processed, save=True)
 ```
 
-### Part 2: Model Training (Coming Soon)
+### Part 2A: Data Preparation for Training
 
 ```python
-# Placeholder for Part 2
-from src.models import SentimentClassifier
+from src.data import load_financial_phrasebank, create_data_splits, create_dataloaders
 
-model = SentimentClassifier(model_name="roberta-base")
-model.train(train_df)
-predictions = model.predict(test_df)
+# Load and split data
+df = load_financial_phrasebank(agreement_level="sentences_75agree")
+train_df, val_df, test_df = create_data_splits(df, seed=42)
+
+# Create DataLoaders
+train_loader, val_loader, test_loader = create_dataloaders(
+    train_df, val_df, test_df,
+    tokenizer_name="ProsusAI/finbert",
+    batch_size=16,
+    max_length=128
+)
+
+print(f"Train: {len(train_loader.dataset)} samples")
+print(f"Val: {len(val_loader.dataset)} samples")
+print(f"Test: {len(test_loader.dataset)} samples")
 ```
+
+### Part 2B: Model Training
+
+```python
+from config import FINBERT_CONFIG
+from src.models import create_model, Trainer
+from src.utils import set_random_seed, get_device
+
+# Setup
+set_random_seed(42)
+device = get_device()
+
+# Create model
+model = create_model(
+    model_checkpoint=FINBERT_CONFIG.model_checkpoint,
+    num_labels=3,
+    device=device
+)
+
+# Create trainer
+trainer = Trainer.from_config(
+    model=model,
+    train_loader=train_loader,
+    val_loader=val_loader,
+    config=FINBERT_CONFIG,
+    checkpoint_dir="outputs/models/finbert"
+)
+
+# Train
+history = trainer.train()
+
+# Save history
+trainer.save_history()
+```
+
+### Part 2C: Model Evaluation
+
+```python
+from src.models import ModelEvaluator, evaluate_model_on_test
+from src.visualization import (
+    plot_training_history,
+    plot_confusion_matrix,
+    plot_per_class_metrics,
+    plot_error_distribution
+)
+
+# Run inference on test set
+predictions, labels, probabilities = evaluate_model_on_test(
+    model, test_loader, device=device
+)
+
+# Create evaluator
+evaluator = ModelEvaluator(label_names=['negative', 'neutral', 'positive'])
+
+# Compute metrics
+metrics = evaluator.compute_metrics(predictions, labels)
+print(f"Accuracy: {metrics['accuracy']:.4f}")
+print(f"F1 (macro): {metrics['f1_macro']:.4f}")
+print(f"F1 (weighted): {metrics['f1_weighted']:.4f}")
+
+# Classification report
+print(evaluator.get_classification_report(predictions, labels))
+
+# Confusion matrix
+cm = evaluator.get_confusion_matrix(predictions, labels)
+
+# Error analysis
+texts = test_df['sentence'].tolist()
+error_analysis = evaluator.analyze_errors(
+    texts, predictions, labels, probabilities, top_k=10
+)
+print(f"Total errors: {error_analysis['total_errors']}")
+print(f"Error rate: {error_analysis['error_rate']:.2f}%")
+
+# Error patterns
+patterns = evaluator.get_error_patterns(error_analysis)
+for pattern in patterns:
+    print(f"  - {pattern}")
+
+# Visualizations
+plot_training_history(history, save_path="outputs/figures/training_history.png")
+plot_confusion_matrix(cm, ['negative', 'neutral', 'positive'],
+                      save_path="outputs/figures/confusion_matrix.png")
+plot_per_class_metrics(metrics, ['negative', 'neutral', 'positive'],
+                       save_path="outputs/figures/per_class_metrics.png")
+plot_error_distribution(error_analysis, save_path="outputs/figures/error_distribution.png")
+```
+
+### Part 2C: Model Comparison
+
+```python
+from src.models import ModelEvaluator
+from src.visualization import plot_model_comparison
+
+evaluator = ModelEvaluator()
+
+# Assuming you have metrics from two models
+finbert_metrics = {...}  # metrics from FinBERT
+roberta_metrics = {...}  # metrics from RoBERTa
+
+# Compare models
+comparison_df = evaluator.compare_models(
+    finbert_metrics, roberta_metrics,
+    model1_name="FinBERT", model2_name="RoBERTa"
+)
+print(comparison_df)
+
+# Per-class comparison
+per_class_df = evaluator.get_per_class_comparison(
+    finbert_metrics, roberta_metrics,
+    model1_name="FinBERT", model2_name="RoBERTa"
+)
+print(per_class_df)
+
+# Visualization
+plot_model_comparison(
+    finbert_metrics, roberta_metrics,
+    "FinBERT", "RoBERTa",
+    save_path="outputs/figures/model_comparison.png"
+)
+```
+
+### Part 2C: Production Inference
+
+```python
+from src.models import SentimentPredictor
+
+# Initialize predictor
+predictor = SentimentPredictor(
+    model_path="outputs/models/finbert/best_model.pt",
+    tokenizer_name="ProsusAI/finbert",
+    device="cuda"
+)
+
+# Single prediction
+result = predictor.predict("The company reported record profits this quarter.")
+print(f"Prediction: {result['prediction']}")
+print(f"Confidence: {result['confidence']:.2%}")
+
+# With probabilities
+result = predictor.predict(
+    "Revenue declined by 15% compared to last year.",
+    return_probabilities=True
+)
+print(f"Prediction: {result['prediction']}")
+print(f"Probabilities: {result['probabilities']}")
+
+# With explanation
+result = predictor.predict_with_explanation(
+    "The merger is expected to create significant synergies."
+)
+print(result['explanation'])
+
+# Batch prediction
+texts = [
+    "Stock prices surged after the announcement.",
+    "The company maintained its market position.",
+    "Losses widened due to increased competition."
+]
+results = predictor.predict(texts)
+for text, pred in zip(texts, results['predictions']):
+    print(f"{pred}: {text}")
+
+# Large batch processing
+results = predictor.predict_batch(
+    large_text_list,
+    batch_size=32,
+    return_probabilities=True
+)
+```
+
+### Part 2C: Additional Metrics
+
+```python
+from src.utils import (
+    compute_additional_metrics,
+    bootstrap_confidence_interval,
+    compute_metrics_with_ci,
+    compute_statistical_tests
+)
+from sklearn.metrics import accuracy_score
+
+# Additional metrics (Cohen's Kappa, MCC)
+add_metrics = compute_additional_metrics(predictions, labels)
+print(f"Cohen's Kappa: {add_metrics['cohen_kappa']:.4f}")
+print(f"Matthews Correlation Coefficient: {add_metrics['matthews_corrcoef']:.4f}")
+print(f"Per-class accuracy: {add_metrics['per_class_accuracy']}")
+
+# Bootstrap confidence intervals
+ci_lower, ci_upper = bootstrap_confidence_interval(
+    predictions, labels,
+    metric_fn=lambda p, l: accuracy_score(l, p),
+    n_bootstrap=1000,
+    confidence_level=0.95
+)
+print(f"Accuracy 95% CI: [{ci_lower:.4f}, {ci_upper:.4f}]")
+
+# Metrics with CI
+metrics_ci = compute_metrics_with_ci(predictions, labels, n_bootstrap=1000)
+print(f"Accuracy: {metrics_ci['accuracy']['value']:.4f} "
+      f"[{metrics_ci['accuracy']['lower']:.4f}, {metrics_ci['accuracy']['upper']:.4f}]")
+
+# Statistical comparison of two models (McNemar's test)
+stats = compute_statistical_tests(
+    model1_predictions, model2_predictions, labels
+)
+print(f"McNemar p-value: {stats['mcnemar_pvalue']:.4f}")
+```
+
+## Model Configurations
+
+| Model | Checkpoint | Learning Rate | Batch Size | Epochs |
+|-------|------------|---------------|------------|--------|
+| FinBERT | `ProsusAI/finbert` | 1e-5 | 16 | 5 |
+| RoBERTa | `roberta-base` | 2e-5 | 16 | 5 |
 
 ## Key Features
 
-- **Modular Architecture**: Reusable components for data loading, preprocessing, and analysis
+- **Modular Architecture**: Reusable components for data loading, preprocessing, training, and evaluation
 - **Comprehensive EDA**: Statistical analysis, visualizations, and data quality checks
-- **Publication-Ready Plots**: High-resolution figures with proper formatting
+- **Multiple Models**: Support for FinBERT, RoBERTa, and other HuggingFace transformers
+- **Early Stopping**: Automatic training termination with best model restoration
+- **Error Analysis**: Detailed misclassification analysis with pattern detection
+- **Publication-Ready Plots**: High-resolution figures (300 DPI) with proper formatting
+- **Bootstrap CI**: Confidence intervals for all metrics
+- **Production Inference**: Easy-to-use predictor with explanations
 - **Logging**: Detailed logging for debugging and monitoring
 - **Type Hints**: Full type annotations for better code quality
-
-## Related Work
-
-1. **FinBERT** (Araci, 2019) - Domain-specific BERT for financial sentiment
-2. **Good Debt or Bad Debt** (Malo et al., 2014) - Original Financial PhraseBank paper
-3. **Financial Sentiment Analysis** (Theil et al., 2018) - Common mistakes and best practices
 
 ## Results (Part 1)
 
@@ -154,22 +383,65 @@ predictions = model.predict(test_df)
 | Min Words | 2 |
 | Max Words | 81 |
 
-### Data Quality
+## API Reference
 
-| Metric | Value |
-|--------|-------|
-| Missing Values | 0 |
-| Duplicates | 5 (0.14%) |
-| Quality Score | 99.9% |
+### ModelEvaluator
 
-### Agreement Level Comparison
+```python
+evaluator = ModelEvaluator(label_names=['negative', 'neutral', 'positive'])
 
-| Agreement | Samples | Positive | Neutral | Negative |
-|-----------|---------|----------|---------|----------|
-| 50% | 4,846 | 1,363 | 2,879 | 604 |
-| 66% | 4,217 | 1,168 | 2,535 | 514 |
-| 75% | 3,453 | 887 | 2,146 | 420 |
-| 100% | 2,264 | 570 | 1,391 | 303 |
+# Methods
+metrics = evaluator.compute_metrics(predictions, labels)
+report = evaluator.get_classification_report(predictions, labels)
+cm = evaluator.get_confusion_matrix(predictions, labels, normalize=False)
+errors = evaluator.analyze_errors(texts, predictions, labels, probabilities, top_k=10)
+patterns = evaluator.get_error_patterns(errors)
+comparison = evaluator.compare_models(metrics1, metrics2, "Model1", "Model2")
+per_class = evaluator.get_per_class_comparison(metrics1, metrics2, "Model1", "Model2")
+```
+
+### SentimentPredictor
+
+```python
+predictor = SentimentPredictor(
+    model_path="path/to/checkpoint.pt",
+    tokenizer_name="ProsusAI/finbert",
+    device="cuda",
+    label_names=['negative', 'neutral', 'positive']
+)
+
+# Methods
+result = predictor.predict(text, return_probabilities=False)
+result = predictor.predict_with_explanation(text)
+results = predictor.predict_batch(texts, batch_size=32)
+```
+
+### Visualization Functions
+
+```python
+from src.visualization import (
+    # Training visualizations
+    plot_training_history(history, save_path=None, title="Training History"),
+    plot_confusion_matrix(cm, labels, save_path=None, normalize=False),
+    plot_per_class_metrics(metrics, labels, save_path=None),
+    plot_model_comparison(metrics1, metrics2, name1, name2, save_path=None),
+    plot_error_distribution(error_analysis, save_path=None, top_n=6),
+    plot_learning_rate(history, save_path=None),
+    plot_confidence_distribution(probs, preds, labels, label_names, save_path=None),
+    create_evaluation_report(metrics, cm, labels, errors, output_dir, model_name),
+)
+```
+
+### Metrics Utilities
+
+```python
+from src.utils import (
+    compute_additional_metrics(predictions, labels),  # Kappa, MCC, per-class acc
+    bootstrap_confidence_interval(preds, labels, metric_fn, n_bootstrap=1000),
+    compute_metrics_with_ci(predictions, labels, n_bootstrap=1000),
+    compute_statistical_tests(preds1, preds2, labels),  # McNemar's test
+)
+```
 
 ## License
 
@@ -178,5 +450,5 @@ This project is for educational purposes.
 ## Acknowledgments
 
 - Malo et al. for the Financial PhraseBank dataset
-- HuggingFace for dataset hosting
-- Course instructors and TAs
+- HuggingFace for dataset hosting and transformers library
+- ProsusAI for FinBERT model

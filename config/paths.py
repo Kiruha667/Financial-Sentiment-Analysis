@@ -13,6 +13,7 @@ PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
+SPLITS_DIR = DATA_DIR / "splits"
 
 # Output directories
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"

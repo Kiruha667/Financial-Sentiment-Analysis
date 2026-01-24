@@ -75,3 +75,24 @@ DATA_VERSION: str = "1.0.0"
 # Report generation
 REPORT_AUTHOR: str = "Financial Sentiment Analysis Project"
 REPORT_DATE_FORMAT: str = "%Y-%m-%d"
+
+# ==============================================================================
+# Part 2: Training Configuration
+# ==============================================================================
+
+# Data split ratios
+TRAIN_RATIO: float = 0.7
+VAL_RATIO: float = 0.15
+TEST_RATIO: float = 0.15
+
+# Text processing for models
+MAX_SEQ_LENGTH: int = 128
+
+# DataLoader configuration
+BATCH_SIZE: int = 16
+NUM_WORKERS: int = 2  # Worker processes for data loading
+
+# Label mapping (list format for HuggingFace compatibility)
+LABEL_LIST: List[str] = ['negative', 'neutral', 'positive']
+LABEL2ID: Dict[str, int] = {label: idx for idx, label in enumerate(LABEL_LIST)}
+ID2LABEL: Dict[int, str] = {idx: label for idx, label in enumerate(LABEL_LIST)}

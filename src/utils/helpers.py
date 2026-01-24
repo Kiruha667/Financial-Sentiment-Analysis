@@ -235,13 +235,16 @@ def create_directory_structure(base_path: Path) -> None:
         "config",
         "data/raw",
         "data/processed",
+        "data/splits",
         "notebooks",
         "src/data",
+        "src/models",
         "src/visualization",
         "src/utils",
         "outputs/figures",
         "outputs/reports",
         "outputs/logs",
+        "outputs/checkpoints",
     ]
 
     for dir_path in directories:
@@ -250,3 +253,116 @@ def create_directory_structure(base_path: Path) -> None:
 
     logger = logging.getLogger(__name__)
     logger.info(f"Directory structure created at {base_path}")
+
+
+# ==============================================================================
+# Part 2: Training Utilities
+# ==============================================================================
+
+def get_device() -> str:
+    """
+    Auto-detect and return available device (cuda/cpu).
+
+    Returns:
+        Device string ('cuda' or 'cpu')
+
+    Example:
+        >>> device = get_device()
+        >>> model = model.to(device)
+    """
+    try:
+        import torch
+        if torch.cuda.is_available():
+            device = 'cuda'
+            logger = logging.getLogger(__name__)
+            logger.info(f"CUDA available: {torch.cuda.get_device_name(0)}")
+            logger.info(f"CUDA memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+        else:
+            device = 'cpu'
+            logger = logging.getLogger(__name__)
+            logger.warning("CUDA not available, using CPU")
+    except ImportError:
+        device = 'cpu'
+        logger = logging.getLogger(__name__)
+        logger.warning("PyTorch not installed, defaulting to CPU")
+
+    return device
+
+
+def count_parameters(model) -> int:
+    """
+    Count total trainable parameters in model.
+
+    Args:
+        model: PyTorch model (nn.Module)
+
+    Returns:
+        Number of trainable parameters
+
+    Example:
+        >>> params = count_parameters(model)
+        >>> print(f"Trainable parameters: {params:,}")
+    """
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+def format_time(seconds: float) -> str:
+    """
+    Format time in seconds to human-readable string.
+
+    Args:
+        seconds: Time in seconds
+
+    Returns:
+        Formatted string (e.g., "1h 23m 45s")
+
+    Examples:
+        >>> format_time(3665)
+        '1h 1m 5s'
+        >>> format_time(125)
+        '2m 5s'
+        >>> format_time(45)
+        '45s'
+    """
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+
+    if hours > 0:
+        return f"{hours}h {minutes}m {secs}s"
+    elif minutes > 0:
+        return f"{minutes}m {secs}s"
+    else:
+        return f"{secs}s"
+
+
+def get_gpu_memory_usage() -> Optional[dict]:
+    """
+    Get current GPU memory usage.
+
+    Returns:
+        Dictionary with memory stats or None if CUDA unavailable
+    """
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return {
+                'allocated': torch.cuda.memory_allocated() / 1e9,
+                'reserved': torch.cuda.memory_reserved() / 1e9,
+                'max_allocated': torch.cuda.max_memory_allocated() / 1e9,
+            }
+    except ImportError:
+        pass
+    return None
+
+
+def clear_gpu_memory() -> None:
+    """Clear GPU memory cache."""
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            logger = logging.getLogger(__name__)
+            logger.info("GPU memory cache cleared")
+    except ImportError:
+        pass
