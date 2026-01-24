@@ -15,10 +15,11 @@ This project implements a complete pipeline for financial sentiment analysis, fr
 
 **Financial PhraseBank** (Malo et al., 2014)
 
-- ~4,840 sentences from financial news
+- 4,846 sentences from financial news (50% agreement level)
 - Annotated by 5-8 annotators with varying agreement levels
 - Three sentiment classes: positive, neutral, negative
-- Multiple agreement configurations (50%, 66%, 75%, 100%)
+- Four agreement configurations: 50%, 66%, 75%, 100%
+- **Used in this project:** 75% agreement (3,453 samples)
 
 Source: [HuggingFace Datasets](https://huggingface.co/datasets/takala/financial_phrasebank)
 
@@ -88,18 +89,23 @@ jupyter notebook notebooks/01_data_analysis.ipynb
 
 2. Or run analysis programmatically:
 ```python
-from src.data import load_financial_phrasebank, DatasetAnalyzer
-from src.visualization import create_all_plots
+from src.data import load_financial_phrasebank, FinancialTextPreprocessor, DatasetAnalyzer
+from src.visualization import plot_label_distribution, generate_all_wordclouds
 
 # Load dataset
 df = load_financial_phrasebank(agreement_level="sentences_75agree")
 
+# Preprocess
+preprocessor = FinancialTextPreprocessor()
+df_processed = preprocessor.preprocess_dataframe(df)
+
 # Analyze
-analyzer = DatasetAnalyzer(df)
+analyzer = DatasetAnalyzer(df_processed)
 stats = analyzer.get_all_statistics()
 
 # Generate plots
-create_all_plots(df)
+plot_label_distribution(df_processed, save=True)
+generate_all_wordclouds(df_processed, save=True)
 ```
 
 ### Part 2: Model Training (Coming Soon)
@@ -129,12 +135,41 @@ predictions = model.predict(test_df)
 
 ## Results (Part 1)
 
+### Dataset Statistics (75% Agreement Level)
+
 | Metric | Value |
 |--------|-------|
-| Total Samples | ~4,840 |
-| Classes | 3 (pos/neu/neg) |
-| Class Balance | Imbalanced (neutral majority) |
-| Avg. Sentence Length | ~23 words |
+| Total Samples | 3,453 |
+| Positive | 887 (25.7%) |
+| Neutral | 2,146 (62.2%) |
+| Negative | 420 (12.2%) |
+| Imbalance Ratio | 5.11 |
+
+### Text Characteristics
+
+| Metric | Value |
+|--------|-------|
+| Avg. Word Count | 22.8 |
+| Avg. Char Count | 124.9 |
+| Min Words | 2 |
+| Max Words | 81 |
+
+### Data Quality
+
+| Metric | Value |
+|--------|-------|
+| Missing Values | 0 |
+| Duplicates | 5 (0.14%) |
+| Quality Score | 99.9% |
+
+### Agreement Level Comparison
+
+| Agreement | Samples | Positive | Neutral | Negative |
+|-----------|---------|----------|---------|----------|
+| 50% | 4,846 | 1,363 | 2,879 | 604 |
+| 66% | 4,217 | 1,168 | 2,535 | 514 |
+| 75% | 3,453 | 887 | 2,146 | 420 |
+| 100% | 2,264 | 570 | 1,391 | 303 |
 
 ## License
 
