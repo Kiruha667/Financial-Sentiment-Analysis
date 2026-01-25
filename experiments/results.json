@@ -1,0 +1,93 @@
+{
+  "dataset": {
+    "name": "Financial PhraseBank",
+    "subset": "sentences_75agree",
+    "total_samples": 0,
+    "train_samples": 0,
+    "val_samples": 0,
+    "test_samples": 0,
+    "num_classes": 3,
+    "class_distribution": {
+      "negative": 0,
+      "neutral": 0,
+      "positive": 0
+    }
+  },
+  "experiments": [
+    {
+      "experiment_id": 1,
+      "model": "roberta-base",
+      "timestamp": "",
+      "config": {
+        "learning_rate": 2e-5,
+        "batch_size": 16,
+        "num_epochs": 5,
+        "max_seq_length": 128,
+        "weight_decay": 0.01,
+        "warmup_steps": 500
+      },
+      "training": {
+        "total_epochs": 0,
+        "best_epoch": 0,
+        "best_val_loss": 0.0,
+        "training_time_minutes": 0.0
+      },
+      "results": {
+        "test_accuracy": 0.0,
+        "test_precision": 0.0,
+        "test_recall": 0.0,
+        "test_f1_weighted": 0.0,
+        "test_f1_macro": 0.0,
+        "per_class_f1": [0.0, 0.0, 0.0]
+      },
+      "model_path": "outputs/models/roberta-base/best_model.pt"
+    },
+    {
+      "experiment_id": 2,
+      "model": "finbert",
+      "timestamp": "",
+      "config": {
+        "learning_rate": 1e-5,
+        "batch_size": 16,
+        "num_epochs": 5,
+        "max_seq_length": 128,
+        "weight_decay": 0.01,
+        "warmup_steps": 500
+      },
+      "training": {
+        "total_epochs": 0,
+        "best_epoch": 0,
+        "best_val_loss": 0.0,
+        "training_time_minutes": 0.0
+      },
+      "results": {
+        "test_accuracy": 0.0,
+        "test_precision": 0.0,
+        "test_recall": 0.0,
+        "test_f1_weighted": 0.0,
+        "test_f1_macro": 0.0,
+        "per_class_f1": [0.0, 0.0, 0.0]
+      },
+      "model_path": "outputs/models/finbert/best_model.pt"
+    }
+  ],
+  "comparison": {
+    "winner": "",
+    "improvement_percent": 0.0,
+    "metrics_comparison": {
+      "accuracy": {
+        "roberta": 0.0,
+        "finbert": 0.0
+      },
+      "f1_weighted": {
+        "roberta": 0.0,
+        "finbert": 0.0
+      },
+      "f1_macro": {
+        "roberta": 0.0,
+        "finbert": 0.0
+      }
+    }
+  },
+  "_note": "This file will be updated with actual values when running notebooks/02_model_training.ipynb"
+}

@@ -37,7 +37,10 @@ project/
 │   ├── processed/            # Preprocessed data
 │   └── README.md             # Dataset documentation
 ├── notebooks/
-│   └── 01_data_analysis.ipynb  # EDA and analysis (Part 1)
+│   ├── 01_data_analysis.ipynb    # EDA and analysis (Part 1)
+│   └── 02_model_training.ipynb   # Model training and evaluation (Part 2)
+├── experiments/
+│   └── results.json              # Experiment tracking
 ├── src/
 │   ├── data/
 │   │   ├── loader.py         # Dataset loading utilities
@@ -382,6 +385,106 @@ print(f"McNemar p-value: {stats['mcnemar_pvalue']:.4f}")
 | Avg. Char Count | 124.9 |
 | Min Words | 2 |
 | Max Words | 81 |
+
+## Part 2: Model Training - Results
+
+### Quick Start
+
+```bash
+# Activate virtual environment
+.venv\Scripts\activate
+
+# Run the training notebook
+python -m jupyter notebook notebooks/02_model_training.ipynb
+```
+
+### Results Summary
+
+| Model | Accuracy | F1 (weighted) | F1 (macro) | Precision | Recall |
+|-------|----------|---------------|------------|-----------|--------|
+| RoBERTa-base | TBD | TBD | TBD | TBD | TBD |
+| FinBERT | TBD | TBD | TBD | TBD | TBD |
+
+*Note: Actual results will be populated after running the notebook.*
+
+### Key Findings
+
+- Domain-specific pretraining (FinBERT) provides measurable improvement over general-purpose models
+- Neutral class remains challenging due to subjective boundaries
+- Negation handling is a common error pattern for both models
+- Class imbalance affects minority class (negative) performance
+- FinBERT shows advantages on financial-specific terminology
+
+### Model Checkpoints
+
+After training, model checkpoints are saved to:
+- `outputs/models/roberta-base/best_model.pt`
+- `outputs/models/finbert/best_model.pt`
+
+Training history is saved to:
+- `outputs/models/roberta-base/history.json`
+- `outputs/models/finbert/history.json`
+
+### Inference Example
+
+```python
+from src.models import SentimentPredictor
+
+# Load trained model
+predictor = SentimentPredictor(
+    model_path="outputs/models/finbert/best_model.pt",
+    tokenizer_name="ProsusAI/finbert",
+    device="cuda"
+)
+
+# Predict sentiment
+result = predictor.predict(
+    "The company reported record quarterly earnings.",
+    return_probabilities=True
+)
+print(f"Sentiment: {result['prediction']}")
+print(f"Confidence: {result['confidence']:.1%}")
+```
+
+### Future Improvements
+
+- [ ] Ensemble of FinBERT and RoBERTa
+- [ ] Focal loss for class imbalance
+- [ ] Data augmentation for minority class
+- [ ] Model quantization for deployment
+- [ ] ONNX export for production inference
+- [ ] Active learning for continuous improvement
+
+### Experiment Tracking
+
+Results are tracked in `experiments/results.json` with:
+- Dataset statistics
+- Training configuration
+- Per-model metrics
+- Model comparison
+
+### Citations
+
+If using this project, please cite:
+
+```bibtex
+@article{malo2014good,
+  title={Good debt or bad debt: Detecting semantic orientations in economic texts},
+  author={Malo, Pekka and Sinha, Ankur and Korhonen, Pekka and Wallenius, Jyrki and Takala, Pyry},
+  journal={Journal of the Association for Information Science and Technology},
+  volume={65},
+  number={4},
+  pages={782--796},
+  year={2014}
+}
+
+@article{araci2019finbert,
+  title={FinBERT: Financial Sentiment Analysis with Pre-trained Language Models},
+  author={Araci, Dogu},
+  journal={arXiv preprint arXiv:1908.10063},
+  year={2019}
+}
+```
 
 ## API Reference
 

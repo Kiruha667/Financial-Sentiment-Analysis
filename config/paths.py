@@ -20,6 +20,10 @@ OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 FIGURES_DIR = OUTPUTS_DIR / "figures"
 REPORTS_DIR = OUTPUTS_DIR / "reports"
 LOGS_DIR = OUTPUTS_DIR / "logs"
+MODELS_DIR = OUTPUTS_DIR / "models"
+
+# Alias for compatibility
+PROCESSED_DIR = PROCESSED_DATA_DIR
 
 # Notebooks directory
 NOTEBOOKS_DIR = PROJECT_ROOT / "notebooks"
@@ -58,6 +62,7 @@ def ensure_directories() -> None:
         FIGURES_DIR,
         REPORTS_DIR,
         LOGS_DIR,
+        MODELS_DIR,
     ]
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
