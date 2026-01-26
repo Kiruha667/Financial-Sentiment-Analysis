@@ -325,7 +325,9 @@ def plot_model_comparison(
 def plot_error_distribution(
     error_analysis: Dict,
     save_path: Optional[str] = None,
-    top_n: int = 6
+    top_n: int = 6,
+    ax: Optional[plt.Axes] = None,
+    title: Optional[str] = None
 ) -> Tuple[plt.Figure, plt.Axes]:
     """
     Plot distribution of error types as horizontal bar chart.
@@ -334,15 +336,23 @@ def plot_error_distribution(
         error_analysis: Output from ModelEvaluator.analyze_errors()
         save_path: Path to save figure (optional)
         top_n: Number of top error types to show
+        ax: Matplotlib axes to plot on (optional, creates new figure if None)
+        title: Custom title for the plot (optional)
 
     Returns:
         Tuple of (Figure, Axes)
     """
     error_type_counts = error_analysis.get('error_type_counts', {})
 
+    # Track if we created our own figure
+    created_figure = ax is None
+
     if not error_type_counts:
         logger.warning("No errors to plot")
-        fig, ax = plt.subplots(figsize=(10, 6))
+        if created_figure:
+            fig, ax = plt.subplots(figsize=(10, 6))
+        else:
+            fig = ax.figure
         ax.text(0.5, 0.5, 'No errors found',
                 ha='center', va='center', fontsize=14)
         ax.axis('off')
@@ -362,7 +372,10 @@ def plot_error_distribution(
     error_types = error_types[::-1]
     counts = counts[::-1]
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    if created_figure:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    else:
+        fig = ax.figure
 
     # Color gradient
     colors = plt.cm.Reds(np.linspace(0.3, 0.8, len(error_types)))
@@ -382,18 +395,22 @@ def plot_error_distribution(
 
     ax.set_xlabel('Number of Errors', fontsize=12, fontweight='bold')
     ax.set_ylabel('Error Type', fontsize=12, fontweight='bold')
-    ax.set_title(f'Top {min(top_n, len(error_type_counts))} Error Types',
-                 fontsize=14, fontweight='bold')
+    if title:
+        ax.set_title(title, fontsize=14, fontweight='bold')
+    else:
+        ax.set_title(f'Top {min(top_n, len(error_type_counts))} Error Types',
+                     fontsize=14, fontweight='bold')
     ax.xaxis.grid(True, alpha=0.3)
     ax.set_axisbelow(True)
 
-    plt.tight_layout()
+    if created_figure:
+        plt.tight_layout()
 
-    if save_path:
-        fig.savefig(save_path, dpi=300, bbox_inches='tight')
-        logger.info(f"Saved error distribution plot to {save_path}")
+        if save_path:
+            fig.savefig(save_path, dpi=300, bbox_inches='tight')
+            logger.info(f"Saved error distribution plot to {save_path}")
 
-    plt.show()
+        plt.show()
 
     return fig, ax
 

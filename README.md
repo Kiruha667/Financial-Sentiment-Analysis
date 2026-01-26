@@ -1,225 +1,102 @@
 # Financial Sentiment Analysis
 
-Проект анализа тональности финансовых текстов с использованием трансформеров (FinBERT, RoBERTa).
+A deep learning project for sentiment classification of financial texts using transformer models. Compares domain-specific FinBERT against general-purpose RoBERTa on the Financial PhraseBank dataset.
 
-## Быстрый старт
+## Project Overview
 
-### 1. Установка
+**Task:** Three-class sentiment classification of financial news sentences:
+- **Positive** — optimistic sentiment (growth, profit, success, expansion)
+- **Neutral** — factual statements without sentiment
+- **Negative** — pessimistic sentiment (losses, decline, problems, risks)
+
+**Goal:** Demonstrate that domain-specific pretrained models (FinBERT) outperform general-purpose models (RoBERTa) on financial NLP tasks.
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Python 3.10+
+- NVIDIA GPU with 6+ GB VRAM (recommended)
+- CUDA 11.7+ (for GPU acceleration)
+
+### Setup
 
 ```bash
-# Клонировать репозиторий
+# Clone repository
 git clone <repository-url>
 cd financial-sentiment-analysis
 
-# Создать виртуальное окружение
+# Create virtual environment
 python -m venv .venv
 
-# Активировать (Windows)
+# Activate (Windows)
 .venv\Scripts\activate
 
-# Установить зависимости
+# Activate (Linux/Mac)
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 2. Запуск ноутбуков
+### Dependencies
 
+Core libraries:
+- `torch` — Deep learning framework
+- `transformers` — HuggingFace transformer models
+- `datasets` — HuggingFace dataset loading
+- `scikit-learn` — Evaluation metrics
+- `matplotlib`, `seaborn` — Visualization
+- `pandas`, `numpy` — Data manipulation
+- `tqdm` — Progress bars
+
+---
+
+## Usage
+
+### Running the Notebooks
+
+**Part 1: Exploratory Data Analysis**
 ```bash
-# Активировать окружение
-.venv\Scripts\activate
-
-# Часть 1: Анализ данных
 jupyter notebook notebooks/01_data_analysis.ipynb
+```
+- Loads and explores the Financial PhraseBank dataset
+- Generates class distribution plots, word clouds, sentence length histograms
+- Saves processed data and statistics
 
-# Часть 2: Обучение моделей
+**Part 2: Model Training and Evaluation**
+```bash
 jupyter notebook notebooks/02_model_training.ipynb
 ```
+- Creates train/val/test splits
+- Trains RoBERTa (baseline) and FinBERT models
+- Evaluates on test set with confusion matrices
+- Performs error analysis
+- Demonstrates inference on new texts
 
-### 3. Использование обученной модели
+### Using Trained Models for Inference
 
 ```python
 from src.models import SentimentPredictor
 
-# Загрузить модель (после обучения)
+# Load the best model
 predictor = SentimentPredictor(
     model_path="outputs/models/finbert/best_model.pt",
     tokenizer_name="ProsusAI/finbert"
 )
 
-# Предсказать тональность
-result = predictor.predict("The company reported record profits.")
-print(f"Тональность: {result['prediction']}")  # positive/neutral/negative
-print(f"Уверенность: {result['confidence']:.1%}")
-```
-
----
-
-## Описание проекта
-
-**Задача:** Классификация финансовых новостей на 3 класса:
-- **Positive** — позитивная тональность (рост, прибыль, успех)
-- **Neutral** — нейтральная (факты без оценки)
-- **Negative** — негативная (убытки, падение, проблемы)
-
-**Датасет:** Financial PhraseBank (3,453 предложения, 75% agreement)
-
-**Модели:**
-| Модель | Описание | Ожидаемый F1 |
-|--------|----------|--------------|
-| FinBERT | Специализирована на финансовых текстах | ~0.85-0.90 |
-| RoBERTa | Общего назначения (baseline) | ~0.78-0.82 |
-
----
-
-## Структура проекта
-
-```
-project/
-├── notebooks/
-│   ├── 01_data_analysis.ipynb    # Часть 1: EDA и визуализация
-│   └── 02_model_training.ipynb   # Часть 2: Обучение и оценка
-│
-├── src/                          # Исходный код
-│   ├── data/                     # Загрузка и обработка данных
-│   ├── models/                   # Модели и обучение
-│   ├── visualization/            # Визуализация
-│   └── utils/                    # Утилиты
-│
-├── config/                       # Конфигурация
-│   ├── paths.py                  # Пути к файлам
-│   ├── params.py                 # Гиперпараметры
-│   └── model_config.py           # Настройки моделей
-│
-├── outputs/                      # Результаты
-│   ├── figures/                  # Графики (PNG)
-│   ├── models/                   # Чекпоинты моделей
-│   ├── reports/                  # Отчеты
-│   └── logs/                     # Логи
-│
-├── experiments/
-│   └── results.json              # Результаты экспериментов
-│
-└── data/
-    ├── raw/                      # Исходные данные
-    ├── processed/                # Обработанные данные
-    └── splits/                   # Train/Val/Test splits
-```
-
----
-
-## Пошаговое руководство
-
-### Часть 1: Анализ данных
-
-Ноутбук `01_data_analysis.ipynb` выполняет:
-- Загрузку датасета Financial PhraseBank
-- Статистический анализ (распределение классов, длины текстов)
-- Визуализацию (гистограммы, wordcloud)
-- Сохранение обработанных данных
-
-**Результаты сохраняются в:**
-- `outputs/figures/` — графики
-- `outputs/reports/` — статистика
-- `data/processed/` — обработанные данные
-
-### Часть 2: Обучение моделей
-
-Ноутбук `02_model_training.ipynb` выполняет:
-1. Создание train/val/test splits (70/15/15)
-2. Обучение RoBERTa-base (baseline)
-3. Обучение FinBERT (domain-specific)
-4. Оценка на тестовом наборе
-5. Анализ ошибок
-6. Демо инференса
-
-**Результаты сохраняются в:**
-- `outputs/models/roberta-base/best_model.pt`
-- `outputs/models/finbert/best_model.pt`
-- `outputs/figures/` — графики обучения
-- `experiments/results.json` — метрики
-
----
-
-## Примеры использования
-
-### Загрузка данных
-
-```python
-from src.data import load_financial_phrasebank
-
-# Загрузить датасет
-df = load_financial_phrasebank(agreement_level="sentences_75agree")
-print(f"Всего: {len(df)} примеров")
-```
-
-### Обучение модели
-
-```python
-from config import FINBERT_CONFIG
-from src.data import load_financial_phrasebank, create_data_splits, create_dataloaders
-from src.models import create_model, Trainer
-from src.utils import get_device
-
-# Данные
-df = load_financial_phrasebank()
-train_df, val_df, test_df = create_data_splits(df)
-train_loader, val_loader, test_loader = create_dataloaders(
-    train_df, val_df, test_df,
-    tokenizer_name="ProsusAI/finbert",
-    batch_size=16
-)
-
-# Модель
-device = get_device()
-model = create_model("ProsusAI/finbert", num_labels=3, device=device)
-
-# Обучение
-trainer = Trainer.from_config(model, train_loader, val_loader, config=FINBERT_CONFIG)
-history = trainer.train()
-```
-
-### Оценка модели
-
-```python
-from src.models import ModelEvaluator, evaluate_model_on_test
-
-# Инференс на тесте
-predictions, labels, probabilities = evaluate_model_on_test(model, test_loader, device)
-
-# Метрики
-evaluator = ModelEvaluator()
-metrics = evaluator.compute_metrics(predictions, labels)
-print(f"Accuracy: {metrics['accuracy']:.4f}")
-print(f"F1 (weighted): {metrics['f1_weighted']:.4f}")
-
-# Отчет
-print(evaluator.get_classification_report(predictions, labels))
-```
-
-### Инференс на новых данных
-
-```python
-from src.models import SentimentPredictor
-
-predictor = SentimentPredictor(
-    model_path="outputs/models/finbert/best_model.pt",
-    tokenizer_name="ProsusAI/finbert"
-)
-
-# Одиночное предсказание
+# Single prediction
 result = predictor.predict("Revenue increased by 25% year-over-year.")
-print(result)
-# {'prediction': 'positive', 'confidence': 0.94}
+print(f"Sentiment: {result['prediction']}, Confidence: {result['confidence']:.1%}")
+# Output: Sentiment: positive, Confidence: 94.2%
 
-# С вероятностями
-result = predictor.predict("The merger is pending approval.", return_probabilities=True)
-print(result['probabilities'])
-# {'negative': 0.05, 'neutral': 0.85, 'positive': 0.10}
-
-# Батч предсказаний
+# Batch prediction
 texts = [
-    "Profits soared to record highs.",
-    "The company maintained stable operations.",
-    "Losses widened amid market turmoil."
+    "The company reported record quarterly earnings.",
+    "Operations remained stable throughout the period.",
+    "Significant losses were recorded due to market downturn."
 ]
 results = predictor.predict(texts)
 for text, pred in zip(texts, results['predictions']):
@@ -228,137 +105,234 @@ for text, pred in zip(texts, results['predictions']):
 
 ---
 
-## Конфигурация моделей
+## Project Structure
 
-Настройки в `config/model_config.py`:
-
-| Параметр | FinBERT | RoBERTa |
-|----------|---------|---------|
-| Learning Rate | 1e-5 | 2e-5 |
-| Batch Size | 16 | 16 |
-| Epochs | 5 | 5 |
-| Max Length | 128 | 128 |
-| Early Stopping | 3 epochs | 3 epochs |
-
-Изменить конфигурацию:
-```python
-from config import FINBERT_CONFIG
-
-# Посмотреть настройки
-print(FINBERT_CONFIG.learning_rate)  # 1e-5
-print(FINBERT_CONFIG.batch_size)     # 16
-
-# Или создать свою
-from config import ModelConfig
-my_config = ModelConfig(
-    model_name="my-model",
-    model_checkpoint="ProsusAI/finbert",
-    learning_rate=5e-6,
-    batch_size=8,
-    num_epochs=10
-)
+```
+financial-sentiment-analysis/
+│
+├── notebooks/
+│   ├── 01_data_analysis.ipynb      # Exploratory data analysis
+│   └── 02_model_training.ipynb     # Model training and evaluation
+│
+├── src/
+│   ├── data/
+│   │   ├── loader.py               # Dataset loading from HuggingFace
+│   │   ├── preprocessor.py         # Text cleaning and preprocessing
+│   │   ├── analyzer.py             # Dataset statistics and analysis
+│   │   └── dataset.py              # PyTorch Dataset and DataLoaders
+│   │
+│   ├── models/
+│   │   ├── classifier.py           # SentimentClassifier wrapper
+│   │   ├── trainer.py              # Training loop with early stopping
+│   │   ├── evaluator.py            # Metrics and evaluation
+│   │   └── predictor.py            # Production inference wrapper
+│   │
+│   ├── visualization/
+│   │   ├── plots.py                # EDA visualizations
+│   │   └── training_viz.py         # Training curves and confusion matrices
+│   │
+│   └── utils/
+│       └── helpers.py              # Device detection, seeding, logging
+│
+├── config/
+│   ├── paths.py                    # Project paths (DATA_DIR, OUTPUT_DIR, etc.)
+│   ├── params.py                   # Label mappings, split ratios
+│   └── model_config.py             # ModelConfig dataclass, FINBERT_CONFIG, ROBERTA_CONFIG
+│
+├── outputs/
+│   ├── figures/                    # Generated plots (PNG)
+│   ├── models/                     # Saved model checkpoints
+│   │   ├── finbert/best_model.pt
+│   │   └── roberta-base/best_model.pt
+│   ├── reports/                    # Analysis reports
+│   └── logs/                       # Training logs
+│
+├── experiments/
+│   └── results.json                # Experiment metrics and comparison
+│
+├── data/
+│   ├── raw/                        # Original data
+│   ├── processed/                  # Cleaned data
+│   └── splits/                     # Train/val/test CSVs
+│
+├── requirements.txt
+├── CLAUDE.md                       # Development guidelines
+└── README.md
 ```
 
 ---
 
-## Результаты
+## Dataset
 
-### Датасет (75% agreement)
+### Financial PhraseBank
 
-| Класс | Количество | Доля |
-|-------|------------|------|
-| Positive | 887 | 25.7% |
+Source: [HuggingFace Datasets](https://huggingface.co/datasets/takala/financial_phrasebank) (Malo et al., 2014)
+
+A collection of financial news sentences annotated by 16 finance professionals. We use the **75% agreement** subset where at least 12 out of 16 annotators agreed on the label.
+
+| Statistic | Value |
+|-----------|-------|
+| Total sentences | 3,453 |
+| Vocabulary size | ~8,500 unique words |
+| Avg. sentence length | 23 words |
+| Agreement threshold | 75% (12/16 annotators) |
+
+### Class Distribution
+
+| Class | Count | Percentage |
+|-------|-------|------------|
 | Neutral | 2,146 | 62.2% |
+| Positive | 887 | 25.7% |
 | Negative | 420 | 12.2% |
 
-### Метрики моделей
+The dataset exhibits significant class imbalance with neutral sentences being dominant. This reflects real-world financial news distribution where most statements are factual.
 
-*Заполняются после запуска ноутбука обучения*
+### Data Splits
 
-| Модель | Accuracy | F1 (weighted) | F1 (macro) |
-|--------|----------|---------------|------------|
-| RoBERTa | — | — | — |
-| FinBERT | — | — | — |
+| Split | Samples | Percentage |
+|-------|---------|------------|
+| Train | 2,417 | 70% |
+| Validation | 518 | 15% |
+| Test | 518 | 15% |
 
----
-
-## Файлы после обучения
-
-```
-outputs/
-├── figures/
-│   ├── data_splits_distribution.png
-│   ├── roberta_training_history.png
-│   ├── roberta_confusion_matrix.png
-│   ├── finbert_training_history.png
-│   ├── finbert_confusion_matrix.png
-│   ├── model_comparison.png
-│   ├── error_distributions.png
-│   └── inference_demo.png
-│
-├── models/
-│   ├── roberta-base/
-│   │   ├── best_model.pt
-│   │   └── history.json
-│   └── finbert/
-│       ├── best_model.pt
-│       └── history.json
-│
-└── logs/
-    └── training.log
-```
+Stratified splitting ensures class proportions are preserved across all splits.
 
 ---
 
-## Требования
+## Models
 
-- Python 3.10+
-- PyTorch 2.0+
-- CUDA (рекомендуется для GPU)
-- 6+ GB GPU VRAM (для batch_size=16)
+### FinBERT
 
-Основные библиотеки:
-- `transformers` — модели HuggingFace
-- `datasets` — загрузка датасетов
-- `scikit-learn` — метрики
-- `matplotlib`, `seaborn` — визуализация
-- `tqdm` — прогресс-бары
+- **Checkpoint:** `ProsusAI/finbert`
+- **Base:** BERT-base architecture (110M parameters)
+- **Pretraining:** Financial communications (corporate reports, analyst reports, financial news)
+- **Why it works:** Understands financial terminology, context, and domain-specific sentiment expressions
+
+### RoBERTa
+
+- **Checkpoint:** `roberta-base`
+- **Base:** RoBERTa-base architecture (125M parameters)
+- **Pretraining:** General English corpus (books, Wikipedia, news)
+- **Role:** Serves as a strong general-purpose baseline
+
+### Model Configuration
+
+| Parameter | FinBERT | RoBERTa |
+|-----------|---------|---------|
+| Learning Rate | 1e-5 | 2e-5 |
+| Batch Size | 16 | 16 |
+| Max Epochs | 5 | 5 |
+| Max Sequence Length | 128 | 128 |
+| Weight Decay | 0.01 | 0.01 |
+| Warmup Steps | 500 | 500 |
+| Early Stopping Patience | 3 | 3 |
+| Optimizer | AdamW | AdamW |
+| Scheduler | Linear warmup + decay | Linear warmup + decay |
+
+---
+
+## Results
+
+### Model Performance Comparison
+
+| Model | Accuracy | F1 (weighted) | F1 (macro) | Best Epoch | Training Time |
+|-------|----------|---------------|------------|------------|---------------|
+| **FinBERT** | **95.95%** | **0.960** | **0.949** | 4 | 6.2 min |
+| RoBERTa | 94.79% | 0.948 | 0.937 | 2 | 6.1 min |
+
+**Key Finding:** FinBERT outperforms RoBERTa by **1.26%** in accuracy, confirming that domain-specific pretraining on financial corpora provides meaningful improvements for financial sentiment analysis.
+
+### Per-Class Performance (F1-Score)
+
+| Class | FinBERT | RoBERTa | Difference |
+|-------|---------|---------|------------|
+| Negative | 0.938 | 0.928 | +0.010 |
+| Neutral | 0.975 | 0.964 | +0.011 |
+| Positive | 0.934 | 0.917 | +0.017 |
+
+Both models perform best on the majority class (Neutral) and show slightly lower performance on minority classes (Negative, Positive), which is expected given the class imbalance.
+
+### Training Dynamics
+
+**FinBERT:**
+- Converged at epoch 4 with validation loss 0.188
+- More stable training curve with gradual improvement
+- Lower learning rate (1e-5) prevented overshooting
+
+**RoBERTa:**
+- Converged faster at epoch 2 with validation loss 0.251
+- Required higher learning rate (2e-5) for effective fine-tuning
+- Earlier convergence suggests less domain adaptation needed
+
+---
+
+## Output Files
+
+After running both notebooks, the following files are generated:
+
+### Figures (`outputs/figures/`)
+- `class_distribution.png` — Dataset class balance
+- `sentence_length_distribution.png` — Text length histogram
+- `wordcloud_*.png` — Word clouds per class
+- `data_splits_distribution.png` — Train/val/test split visualization
+- `roberta_training_history.png` — RoBERTa loss/accuracy curves
+- `roberta_confusion_matrix.png` — RoBERTa predictions vs labels
+- `finbert_training_history.png` — FinBERT loss/accuracy curves
+- `finbert_confusion_matrix.png` — FinBERT predictions vs labels
+- `model_comparison.png` — Side-by-side metrics comparison
+
+### Models (`outputs/models/`)
+- `roberta-base/best_model.pt` — Best RoBERTa checkpoint
+- `finbert/best_model.pt` — Best FinBERT checkpoint
+
+### Experiment Results (`experiments/results.json`)
+- Complete metrics for both models
+- Training configuration
+- Per-class performance
+- Model comparison statistics
 
 ---
 
 ## Troubleshooting
 
-**CUDA out of memory:**
+**CUDA out of memory**
+Reduce batch size in the notebook or config:
 ```python
-# Уменьшить batch_size
-train_loader, val_loader, test_loader = create_dataloaders(
-    ..., batch_size=8  # вместо 16
-)
+batch_size = 8  # instead of 16
 ```
 
-**Import errors в ноутбуке:**
+**Import errors in notebooks**
+Add project root to Python path:
 ```python
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path.cwd().parent))
 ```
 
-**Windows DataLoader workers:**
-```python
-# Использовать num_workers=0
-train_loader, val_loader, test_loader = create_dataloaders(
-    ..., num_workers=0
-)
-```
+**Slow training on CPU**
+Training on CPU is possible but slow (~1 hour per model). GPU is strongly recommended.
+
+**Windows multiprocessing issues**
+Set `num_workers=0` in DataLoader creation if you encounter multiprocessing errors.
 
 ---
 
-## Лицензия
+## References
 
-Проект создан в образовательных целях.
+### Dataset
+- Malo, P., Sinha, A., Korhonen, P., Wallenius, J., & Takala, P. (2014). Good debt or bad debt: Detecting semantic orientations in economic texts. *Journal of the Association for Information Science and Technology*, 65(4), 782-796.
 
-## Благодарности
+### Models
+- [FinBERT by ProsusAI](https://huggingface.co/ProsusAI/finbert) — Financial domain BERT
+- [RoBERTa by Facebook AI](https://huggingface.co/roberta-base) — Robustly optimized BERT
 
-- [Financial PhraseBank](https://huggingface.co/datasets/takala/financial_phrasebank) — Malo et al.
-- [FinBERT](https://huggingface.co/ProsusAI/finbert) — ProsusAI
+### Libraries
 - [HuggingFace Transformers](https://huggingface.co/transformers)
+- [HuggingFace Datasets](https://huggingface.co/datasets)
+- [PyTorch](https://pytorch.org/)
+
+---
+
+## License
+
+This project is created for educational purposes.

@@ -42,6 +42,8 @@ def setup_logging(
     """
     if log_file is None:
         log_file = MAIN_LOG_FILE
+    elif isinstance(log_file, str):
+        log_file = Path(log_file)
 
     # Ensure log directory exists
     log_file.parent.mkdir(parents=True, exist_ok=True)
