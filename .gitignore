@@ -50,12 +50,7 @@ data/processed/*.csv
 data/processed/*.json
 data/processed/*.parquet
 
-# Outputs (generated files)
-outputs/figures/*.png
-outputs/figures/*.jpg
-outputs/figures/*.pdf
-outputs/reports/*.csv
-outputs/reports/*.md
+# Outputs (logs only)
 outputs/logs/*.log
 
 # Models (large files for Part 2)
