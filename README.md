@@ -142,8 +142,6 @@ financial-sentiment-analysis/
 ├── outputs/
 │   ├── figures/                    # Generated plots (PNG)
 │   ├── models/                     # Saved model checkpoints
-│   │   ├── finbert/best_model.pt
-│   │   └── roberta-base/best_model.pt
 │   ├── reports/                    # Analysis reports
 │   └── logs/                       # Training logs
 │
@@ -187,6 +185,22 @@ A collection of financial news sentences annotated by 16 finance professionals. 
 
 The dataset exhibits significant class imbalance with neutral sentences being dominant. This reflects real-world financial news distribution where most statements are factual.
 
+![Label Distribution](outputs/figures/label_distribution.png)
+
+### Text Analysis
+
+![Text Length Distribution](outputs/figures/text_length_distribution.png)
+
+![Word Frequency](outputs/figures/word_frequency.png)
+
+### Word Clouds by Sentiment
+
+<p align="center">
+  <img src="outputs/figures/wordcloud_positive.png" width="32%" />
+  <img src="outputs/figures/wordcloud_neutral.png" width="32%" />
+  <img src="outputs/figures/wordcloud_negative.png" width="32%" />
+</p>
+
 ### Data Splits
 
 | Split | Samples | Percentage |
@@ -196,6 +210,8 @@ The dataset exhibits significant class imbalance with neutral sentences being do
 | Test | 518 | 15% |
 
 Stratified splitting ensures class proportions are preserved across all splits.
+
+![Data Splits Distribution](outputs/figures/data_splits_distribution.png)
 
 ---
 
@@ -242,6 +258,8 @@ Stratified splitting ensures class proportions are preserved across all splits.
 
 **Key Finding:** FinBERT outperforms RoBERTa by **1.26%** in accuracy, confirming that domain-specific pretraining on financial corpora provides meaningful improvements for financial sentiment analysis.
 
+![Model Comparison](outputs/figures/model_comparison.png)
+
 ### Per-Class Performance (F1-Score)
 
 | Class | FinBERT | RoBERTa | Difference |
@@ -251,6 +269,32 @@ Stratified splitting ensures class proportions are preserved across all splits.
 | Positive | 0.934 | 0.917 | +0.017 |
 
 Both models perform best on the majority class (Neutral) and show slightly lower performance on minority classes (Negative, Positive), which is expected given the class imbalance.
+
+### Training History
+
+#### RoBERTa
+![RoBERTa Training History](outputs/figures/roberta_training_history.png)
+
+#### FinBERT
+![FinBERT Training History](outputs/figures/finbert_training_history.png)
+
+### Confusion Matrices
+
+<p align="center">
+  <img src="outputs/figures/roberta_confusion_matrix.png" width="45%" />
+  <img src="outputs/figures/finbert_confusion_matrix.png" width="45%" />
+</p>
+
+### Per-Class Metrics
+
+<p align="center">
+  <img src="outputs/figures/roberta_per_class.png" width="45%" />
+  <img src="outputs/figures/finbert_per_class.png" width="45%" />
+</p>
+
+### Error Analysis
+
+![Error Distributions](outputs/figures/error_distributions.png)
 
 ### Training Dynamics
 
@@ -266,30 +310,9 @@ Both models perform best on the majority class (Neutral) and show slightly lower
 
 ---
 
-## Output Files
+## Inference Demo
 
-After running both notebooks, the following files are generated:
-
-### Figures (`outputs/figures/`)
-- `class_distribution.png` — Dataset class balance
-- `sentence_length_distribution.png` — Text length histogram
-- `wordcloud_*.png` — Word clouds per class
-- `data_splits_distribution.png` — Train/val/test split visualization
-- `roberta_training_history.png` — RoBERTa loss/accuracy curves
-- `roberta_confusion_matrix.png` — RoBERTa predictions vs labels
-- `finbert_training_history.png` — FinBERT loss/accuracy curves
-- `finbert_confusion_matrix.png` — FinBERT predictions vs labels
-- `model_comparison.png` — Side-by-side metrics comparison
-
-### Models (`outputs/models/`)
-- `roberta-base/best_model.pt` — Best RoBERTa checkpoint
-- `finbert/best_model.pt` — Best FinBERT checkpoint
-
-### Experiment Results (`experiments/results.json`)
-- Complete metrics for both models
-- Training configuration
-- Per-class performance
-- Model comparison statistics
+![Inference Demo](outputs/figures/inference_demo.png)
 
 ---
 
