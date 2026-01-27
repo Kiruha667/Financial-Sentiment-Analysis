@@ -121,6 +121,19 @@ ROBERTA_CONFIG = ModelConfig(
     patience=3
 )
 
+# Multilingual model for cross-lingual sentiment analysis (Spanish, Russian, etc.)
+XLM_ROBERTA_CONFIG = ModelConfig(
+    model_name="xlm-roberta",
+    model_checkpoint="xlm-roberta-base",
+    learning_rate=2e-5,
+    batch_size=16,  # May need to reduce to 8 if OOM on 6GB VRAM
+    num_epochs=5,
+    warmup_steps=500,
+    weight_decay=0.01,
+    max_seq_length=128,
+    patience=3
+)
+
 
 def get_config(model_name: str) -> ModelConfig:
     """
@@ -138,6 +151,7 @@ def get_config(model_name: str) -> ModelConfig:
     configs = {
         "finbert": FINBERT_CONFIG,
         "roberta-base": ROBERTA_CONFIG,
+        "xlm-roberta": XLM_ROBERTA_CONFIG,
     }
 
     if model_name.lower() not in configs:

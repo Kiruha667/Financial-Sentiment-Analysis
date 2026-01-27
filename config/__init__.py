@@ -6,6 +6,7 @@ from config.model_config import (
     ModelConfig,
     FINBERT_CONFIG,
     ROBERTA_CONFIG,
+    XLM_ROBERTA_CONFIG,
     get_config,
     print_config,
 )
