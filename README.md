@@ -76,6 +76,14 @@ jupyter notebook notebooks/02_model_training.ipynb
 - Performs error analysis
 - Demonstrates inference on new texts
 
+**Part 3: Multilingual Model (XLM-RoBERTa)**
+```bash
+jupyter notebook notebooks/03_xlm_roberta_training.ipynb
+```
+- Trains XLM-RoBERTa for cross-lingual sentiment analysis
+- Tests zero-shot transfer to Spanish
+- Interactive demo for multilingual inference
+
 ### Using Trained Models for Inference
 
 ```python
@@ -103,6 +111,23 @@ for text, pred in zip(texts, results['predictions']):
     print(f"{pred}: {text}")
 ```
 
+### Multilingual Inference (XLM-RoBERTa)
+
+```python
+from src.models import SentimentPredictor
+
+# Load multilingual model
+predictor = SentimentPredictor(
+    model_path="outputs/models/xlm-roberta/best_model.pt",
+    tokenizer_name="xlm-roberta-base"
+)
+
+# Works with multiple languages (trained on English only!)
+predictor.predict("Revenue increased by 25%.")                      # English → positive
+predictor.predict("Los ingresos aumentaron un 25%.")                # Spanish → positive
+predictor.predict("Компания объявила о рекордной прибыли.")         # Russian → positive
+```
+
 ---
 
 ## Project Structure
@@ -112,7 +137,8 @@ financial-sentiment-analysis/
 │
 ├── notebooks/
 │   ├── 01_data_analysis.ipynb      # Exploratory data analysis
-│   └── 02_model_training.ipynb     # Model training and evaluation
+│   ├── 02_model_training.ipynb     # Model training and evaluation
+│   └── 03_xlm_roberta_training.ipynb  # Multilingual model training
 │
 ├── src/
 │   ├── data/
@@ -137,7 +163,7 @@ financial-sentiment-analysis/
 ├── config/
 │   ├── paths.py                    # Project paths (DATA_DIR, OUTPUT_DIR, etc.)
 │   ├── params.py                   # Label mappings, split ratios
-│   └── model_config.py             # ModelConfig dataclass, FINBERT_CONFIG, ROBERTA_CONFIG
+│   └── model_config.py             # ModelConfig dataclass, model configurations
 │
 ├── outputs/
 │   ├── figures/                    # Generated plots (PNG)
@@ -231,32 +257,60 @@ Stratified splitting ensures class proportions are preserved across all splits.
 - **Pretraining:** General English corpus (books, Wikipedia, news)
 - **Role:** Serves as a strong general-purpose baseline
 
+### XLM-RoBERTa (Multilingual)
+
+- **Checkpoint:** `xlm-roberta-base`
+- **Base:** XLM-RoBERTa architecture (278M parameters)
+- **Pretraining:** CommonCrawl data in 100+ languages (2.5TB)
+- **Role:** Enables cross-lingual transfer — train on English, predict on Spanish/Russian/etc.
+
 ### Model Configuration
 
-| Parameter | FinBERT | RoBERTa |
-|-----------|---------|---------|
-| Learning Rate | 1e-5 | 2e-5 |
-| Batch Size | 16 | 16 |
-| Max Epochs | 5 | 5 |
-| Max Sequence Length | 128 | 128 |
-| Weight Decay | 0.01 | 0.01 |
-| Warmup Steps | 500 | 500 |
-| Early Stopping Patience | 3 | 3 |
-| Optimizer | AdamW | AdamW |
-| Scheduler | Linear warmup + decay | Linear warmup + decay |
+| Parameter | FinBERT | RoBERTa | XLM-RoBERTa |
+|-----------|---------|---------|-------------|
+| Learning Rate | 1e-5 | 2e-5 | 2e-5 |
+| Batch Size | 16 | 16 | 16 |
+| Max Epochs | 5 | 5 | 5 |
+| Max Sequence Length | 128 | 128 | 128 |
+| Weight Decay | 0.01 | 0.01 | 0.01 |
+| Warmup Steps | 500 | 500 | 500 |
+| Early Stopping Patience | 3 | 3 | 3 |
+| Optimizer | AdamW | AdamW | AdamW |
+| Scheduler | Linear warmup + decay | Linear warmup + decay | Linear warmup + decay |
 
 ---
 
 ## Results
 
-### Model Performance Comparison
+### Model Performance Comparison (English)
 
 | Model | Accuracy | F1 (weighted) | F1 (macro) | Best Epoch | Training Time |
 |-------|----------|---------------|------------|------------|---------------|
 | **FinBERT** | **95.95%** | **0.960** | **0.949** | 4 | 6.2 min |
 | RoBERTa | 94.79% | 0.948 | 0.937 | 2 | 6.1 min |
+| XLM-RoBERTa | 91.70% | 0.918 | 0.895 | — | 8.5 min |
 
 **Key Finding:** FinBERT outperforms RoBERTa by **1.26%** in accuracy, confirming that domain-specific pretraining on financial corpora provides meaningful improvements for financial sentiment analysis.
+
+### Cross-lingual Results (XLM-RoBERTa)
+
+XLM-RoBERTa enables **zero-shot cross-lingual transfer** — the model is trained on English data and tested on Spanish without any Spanish training examples.
+
+| Language | Accuracy | Notes |
+|----------|----------|-------|
+| English (test set) | 91.7% | Standard evaluation |
+| Spanish (zero-shot) | 80.0% | No Spanish training data |
+| **Transfer Efficiency** | **87.2%** | Spanish / English ratio |
+
+#### Spanish Per-Class Performance
+
+| Class | Accuracy | Correct/Total |
+|-------|----------|---------------|
+| Positive | 100% | 5/5 |
+| Neutral | 100% | 5/5 |
+| Negative | 40% | 2/5 |
+
+The model struggles with negative Spanish sentences, likely because negative financial expressions differ more across languages than positive/neutral ones.
 
 ![Model Comparison](outputs/figures/model_comparison.png)
 
@@ -348,6 +402,7 @@ Set `num_workers=0` in DataLoader creation if you encounter multiprocessing erro
 ### Models
 - [FinBERT by ProsusAI](https://huggingface.co/ProsusAI/finbert) — Financial domain BERT
 - [RoBERTa by Facebook AI](https://huggingface.co/roberta-base) — Robustly optimized BERT
+- [XLM-RoBERTa by Facebook AI](https://huggingface.co/xlm-roberta-base) — Multilingual RoBERTa (100+ languages)
 
 ### Libraries
 - [HuggingFace Transformers](https://huggingface.co/transformers)
