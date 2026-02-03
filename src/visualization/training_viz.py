@@ -415,6 +415,89 @@ def plot_error_distribution(
     return fig, ax
 
 
+def plot_multi_model_comparison(
+    all_metrics: Dict[str, Dict[str, float]],
+    save_path: Optional[str] = None,
+    title: str = "Multi-Model Comparison"
+) -> Tuple[plt.Figure, plt.Axes]:
+    """
+    Plot side-by-side comparison of multiple models (4+).
+
+    Args:
+        all_metrics: Dictionary mapping model name -> metrics dict.
+            Each metrics dict should contain keys like 'accuracy',
+            'precision_weighted', 'recall_weighted', 'f1_weighted', 'f1_macro'.
+        save_path: Path to save figure (optional)
+        title: Figure title
+
+    Returns:
+        Tuple of (Figure, Axes)
+    """
+    metrics_keys = [
+        'accuracy',
+        'precision_weighted',
+        'recall_weighted',
+        'f1_weighted',
+        'f1_macro'
+    ]
+    metric_labels = [
+        'Accuracy',
+        'Precision',
+        'Recall',
+        'F1 (weighted)',
+        'F1 (macro)'
+    ]
+
+    model_names = list(all_metrics.keys())
+    n_models = len(model_names)
+    n_metrics = len(metric_labels)
+
+    fig, ax = plt.subplots(figsize=(14, 7))
+
+    x = np.arange(n_metrics)
+    total_width = 0.75
+    bar_width = total_width / n_models
+
+    colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
+
+    for i, model_name in enumerate(model_names):
+        values = [all_metrics[model_name].get(k, 0.0) for k in metrics_keys]
+        offset = (i - n_models / 2 + 0.5) * bar_width
+        bars = ax.bar(
+            x + offset, values, bar_width,
+            label=model_name, alpha=0.85,
+            color=colors[i % len(colors)], edgecolor='white', linewidth=0.5
+        )
+        for bar in bars:
+            height = bar.get_height()
+            ax.annotate(
+                f'{height:.3f}',
+                xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3), textcoords="offset points",
+                ha='center', va='bottom', fontsize=7, rotation=45
+            )
+
+    ax.set_xlabel('Metric', fontsize=12, fontweight='bold')
+    ax.set_ylabel('Score', fontsize=12, fontweight='bold')
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(metric_labels, rotation=15, ha='right')
+    ax.set_ylim([0, 1.08])
+    ax.legend(loc='lower right', fontsize=9)
+    ax.yaxis.grid(True, alpha=0.3)
+    ax.set_axisbelow(True)
+
+    plt.tight_layout()
+
+    if save_path:
+        fig.savefig(save_path, dpi=300, bbox_inches='tight')
+        logger.info(f"Saved multi-model comparison plot to {save_path}")
+
+    plt.show()
+
+    return fig, ax
+
+
 def plot_learning_rate(
     history: Union[Dict, object],
     save_path: Optional[str] = None,

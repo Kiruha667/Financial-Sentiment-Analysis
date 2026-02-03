@@ -1,6 +1,6 @@
 # Financial Sentiment Analysis
 
-A deep learning project for sentiment classification of financial texts using transformer models. Compares domain-specific FinBERT against general-purpose RoBERTa on the Financial PhraseBank dataset.
+A deep learning project for sentiment classification of financial texts using transformer models. Compares domain-specific FinBERT against general-purpose RoBERTa on the Financial PhraseBank dataset, with data augmentation for class balancing.
 
 ## Project Overview
 
@@ -48,6 +48,7 @@ Core libraries:
 - `transformers` — HuggingFace transformer models
 - `datasets` — HuggingFace dataset loading
 - `scikit-learn` — Evaluation metrics
+- `nlpaug` — Data augmentation (synonym replacement, word deletion)
 - `matplotlib`, `seaborn` — Visualization
 - `pandas`, `numpy` — Data manipulation
 - `tqdm` — Progress bars
@@ -66,11 +67,19 @@ jupyter notebook notebooks/01_data_analysis.ipynb
 - Generates class distribution plots, word clouds, sentence length histograms
 - Saves processed data and statistics
 
+**Part 2a: Data Augmentation**
+```bash
+jupyter notebook notebooks/03a_data_augmentation.ipynb
+```
+- Balances the training set from 2,417 to 4,506 samples
+- Fetches external data, applies nlpaug, generates templates
+- Saves balanced dataset to `data/augmented/train_balanced.csv`
+
 **Part 2: Model Training and Evaluation**
 ```bash
 jupyter notebook notebooks/02_model_training.ipynb
 ```
-- Creates train/val/test splits
+- Loads balanced training set (toggle `USE_BALANCED = True/False`)
 - Trains RoBERTa (baseline) and FinBERT models
 - Evaluates on test set with confusion matrices
 - Performs error analysis
@@ -123,9 +132,8 @@ predictor = SentimentPredictor(
 )
 
 # Works with multiple languages (trained on English only!)
-predictor.predict("Revenue increased by 25%.")                      # English → positive
-predictor.predict("Los ingresos aumentaron un 25%.")                # Spanish → positive
-predictor.predict("Компания объявила о рекордной прибыли.")         # Russian → positive
+predictor.predict("Revenue increased by 25%.")                      # English -> positive
+predictor.predict("Los ingresos aumentaron un 25%.")                # Spanish -> positive
 ```
 
 ---
@@ -134,53 +142,56 @@ predictor.predict("Компания объявила о рекордной пр�
 
 ```
 financial-sentiment-analysis/
-│
+|
 ├── notebooks/
-│   ├── 01_data_analysis.ipynb      # Exploratory data analysis
-│   ├── 02_model_training.ipynb     # Model training and evaluation
-│   └── 03_xlm_roberta_training.ipynb  # Multilingual model training
+│   ├── 01_data_analysis.ipynb         # Exploratory data analysis
+│   ├── 02_model_training.ipynb        # Model training and evaluation
+│   ├── 03_xlm_roberta_training.ipynb  # Multilingual model training
+│   └── 03a_data_augmentation.ipynb    # Dataset balancing via augmentation
 │
 ├── src/
 │   ├── data/
-│   │   ├── loader.py               # Dataset loading from HuggingFace
-│   │   ├── preprocessor.py         # Text cleaning and preprocessing
-│   │   ├── analyzer.py             # Dataset statistics and analysis
-│   │   └── dataset.py              # PyTorch Dataset and DataLoaders
+│   │   ├── loader.py                  # Dataset loading from HuggingFace
+│   │   ├── preprocessor.py            # Text cleaning and preprocessing
+│   │   ├── analyzer.py                # Dataset statistics and analysis
+│   │   ├── dataset.py                 # PyTorch Dataset and DataLoaders
+│   │   └── augmentor.py               # Data augmentation and balancing
 │   │
 │   ├── models/
-│   │   ├── classifier.py           # SentimentClassifier wrapper
-│   │   ├── trainer.py              # Training loop with early stopping
-│   │   ├── evaluator.py            # Metrics and evaluation
-│   │   └── predictor.py            # Production inference wrapper
+│   │   ├── classifier.py              # SentimentClassifier wrapper
+│   │   ├── trainer.py                 # Training loop with early stopping
+│   │   ├── evaluator.py               # Metrics and evaluation
+│   │   └── predictor.py               # Production inference wrapper
 │   │
 │   ├── visualization/
-│   │   ├── plots.py                # EDA visualizations
-│   │   └── training_viz.py         # Training curves and confusion matrices
+│   │   ├── plots.py                   # EDA visualizations
+│   │   └── training_viz.py            # Training curves and confusion matrices
 │   │
 │   └── utils/
-│       └── helpers.py              # Device detection, seeding, logging
+│       └── helpers.py                 # Device detection, seeding, logging
 │
 ├── config/
-│   ├── paths.py                    # Project paths (DATA_DIR, OUTPUT_DIR, etc.)
-│   ├── params.py                   # Label mappings, split ratios
-│   └── model_config.py             # ModelConfig dataclass, model configurations
+│   ├── paths.py                       # Project paths (DATA_DIR, OUTPUT_DIR, etc.)
+│   ├── params.py                      # Label mappings, split ratios, augmentation config
+│   └── model_config.py                # ModelConfig dataclass, model configurations
 │
 ├── outputs/
-│   ├── figures/                    # Generated plots (PNG)
-│   ├── models/                     # Saved model checkpoints
-│   ├── reports/                    # Analysis reports
-│   └── logs/                       # Training logs
-│
-├── experiments/
-│   └── results.json                # Experiment metrics and comparison
+│   ├── figures/                       # Generated plots (PNG)
+│   ├── models/                        # Saved model checkpoints
+│   ├── reports/                       # Analysis reports
+│   └── logs/                          # Training logs
 │
 ├── data/
-│   ├── raw/                        # Original data
-│   ├── processed/                  # Cleaned data
-│   └── splits/                     # Train/val/test CSVs
+│   ├── raw/                           # Original data
+│   ├── processed/                     # Cleaned data
+│   ├── splits/                        # Train/val/test CSVs
+│   └── augmented/                     # Balanced training set
+│
+├── experiments/
+│   └── results.json                   # Experiment metrics and comparison
 │
 ├── requirements.txt
-├── CLAUDE.md                       # Development guidelines
+├── CLAUDE.md                          # Development guidelines
 └── README.md
 ```
 
@@ -201,7 +212,7 @@ A collection of financial news sentences annotated by 16 finance professionals. 
 | Avg. sentence length | 23 words |
 | Agreement threshold | 75% (12/16 annotators) |
 
-### Class Distribution
+### Class Distribution (Original)
 
 | Class | Count | Percentage |
 |-------|-------|------------|
@@ -238,6 +249,40 @@ The dataset exhibits significant class imbalance with neutral sentences being do
 Stratified splitting ensures class proportions are preserved across all splits.
 
 ![Data Splits Distribution](outputs/figures/data_splits_distribution.png)
+
+---
+
+## Data Augmentation
+
+The original training set is heavily imbalanced (negative: 294, neutral: 1,502, positive: 621). To improve model performance on minority classes, we balance the training set using three data sources in priority order.
+
+**Only the training set is augmented.** Validation and test sets remain untouched to ensure honest evaluation on the natural data distribution.
+
+### Augmentation Strategy
+
+| Source | Description | Samples Added |
+|--------|-------------|---------------|
+| **PhraseBank 50agree** | Additional sentences from the 50% agreement subset (not in 75agree), real human-annotated text | 1,052 |
+| **nlpaug (delete)** | Random word deletion applied to existing minority-class sentences | 168 |
+| **Templates** | 50 financial sentence templates per class with randomized slot-filling (companies, metrics, percentages) | 869 |
+
+### Balanced Training Set
+
+| Class | Before | After | Source Breakdown |
+|-------|--------|-------|------------------|
+| Negative | 294 | 1,502 | 294 original + 310 phrasebank + 168 augmented + 730 template |
+| Neutral | 1,502 | 1,502 | 1,502 original (no augmentation needed) |
+| Positive | 621 | 1,502 | 621 original + 742 phrasebank + 139 template |
+| **Total** | **2,417** | **4,506** | |
+
+### Output Schema (`data/augmented/train_balanced.csv`)
+
+| Column | Description |
+|--------|-------------|
+| `sentence` | Financial text |
+| `label` | 0 (negative), 1 (neutral), 2 (positive) |
+| `label_name` | negative, neutral, positive |
+| `source` | `original`, `phrasebank_50agree`, `augmented_delete`, `template_generated` |
 
 ---
 
@@ -291,6 +336,35 @@ Stratified splitting ensures class proportions are preserved across all splits.
 | XLM-RoBERTa | 91.70% | 0.918 | 0.895 | — | 8.5 min |
 
 **Key Finding:** FinBERT outperforms RoBERTa by **1.26%** in accuracy, confirming that domain-specific pretraining on financial corpora provides meaningful improvements for financial sentiment analysis.
+
+### Base Models vs Fine-tuned (Baseline Comparison)
+
+To quantify the value of fine-tuning, we evaluate pre-trained models without any task-specific training on the same test set:
+
+- **FinBERT (base)** — direct inference using the pre-trained sentiment head
+- **RoBERTa (zero-shot)** — zero-shot classification via NLI model (`facebook/bart-large-mnli`)
+
+FinBERT ships with a 3-class financial sentiment head, so it can be used directly. RoBERTa has no sentiment head, so the best baseline without fine-tuning is zero-shot classification through natural language inference.
+
+| Model | Accuracy | F1 (weighted) | F1 (macro) |
+|-------|----------|---------------|------------|
+| FinBERT (base) | 94.79% | 0.949 | 0.935 |
+| RoBERTa (zero-shot) | 39.96% | 0.273 | 0.415 |
+| **FinBERT (fine-tuned)** | **95.56%** | **0.956** | **0.950** |
+| RoBERTa (fine-tuned) | 91.12% | 0.914 | 0.909 |
+
+#### Fine-tuning Improvement
+
+| Model | Accuracy Gain | F1 (weighted) Gain |
+|-------|---------------|---------------------|
+| FinBERT | +0.77% | +0.008 |
+| RoBERTa | +51.16% | +0.641 |
+
+FinBERT's pre-trained sentiment head already achieves 94.8% accuracy on financial texts — fine-tuning on the target dataset adds only marginal improvement (+0.8%). RoBERTa, lacking any financial sentiment knowledge, jumps from 40% to 91% with fine-tuning (+128% relative gain).
+
+![Base vs Fine-tuned Comparison](outputs/figures/multi_model_comparison.png)
+
+![Per-Class F1 All Models](outputs/figures/per_class_f1_all_models.png)
 
 ### Cross-lingual Results (XLM-RoBERTa)
 
@@ -408,6 +482,7 @@ Set `num_workers=0` in DataLoader creation if you encounter multiprocessing erro
 - [HuggingFace Transformers](https://huggingface.co/transformers)
 - [HuggingFace Datasets](https://huggingface.co/datasets)
 - [PyTorch](https://pytorch.org/)
+- [nlpaug](https://github.com/makcedward/nlpaug) — Data augmentation for NLP
 
 ---
 

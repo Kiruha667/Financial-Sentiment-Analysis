@@ -28,6 +28,9 @@ ipykernel>=6.25.0
 # Natural Language Processing
 nltk>=3.8.0
 
+# Data Augmentation
+nlpaug>=1.1.11
+
 # Part 2: Deep Learning
 torch>=2.0.0
 transformers>=4.35.0

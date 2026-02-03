@@ -3,7 +3,7 @@
     "name": "Financial PhraseBank",
     "subset": "sentences_75agree",
     "total_samples": 3453,
-    "train_samples": 2417,
+    "train_samples": 4506,
     "val_samples": 518,
     "test_samples": 518,
     "num_classes": 3,
@@ -17,7 +17,7 @@
     {
       "experiment_id": 1,
       "model": "roberta-base",
-      "timestamp": "2026-01-26T18:18:50.147708",
+      "timestamp": "2026-02-01T19:55:39.702133",
       "config": {
         "learning_rate": 2e-05,
         "batch_size": 16,
@@ -29,19 +29,19 @@
       "training": {
         "total_epochs": 5,
         "best_epoch": 2,
-        "best_val_loss": 0.25050450669545116,
-        "training_time_minutes": 6.05
+        "best_val_loss": 0.2527409964664416,
+        "training_time_minutes": 10.86
       },
       "results": {
-        "test_accuracy": 0.9478764478764479,
-        "test_precision": 0.9478236207987532,
-        "test_recall": 0.9478764478764479,
-        "test_f1_weighted": 0.9478413696088114,
-        "test_f1_macro": 0.9365447727846749,
+        "test_accuracy": 0.9111969111969112,
+        "test_precision": 0.9280345932809037,
+        "test_recall": 0.9111969111969112,
+        "test_f1_weighted": 0.9138347971775064,
+        "test_f1_macro": 0.9092724045131786,
         "per_class_f1": [
-          0.928,
-          0.9643410852713178,
-          0.9172932330827067
+          0.9375,
+          0.9322314049586777,
+          0.858085808580858
         ]
       },
       "model_path": "C:\\Users\\seliv\\OneDrive\\Desktop\\Financial Sentiment Analysis\\outputs\\models\\roberta-base\\best_model.pt"
@@ -49,7 +49,7 @@
     {
       "experiment_id": 2,
       "model": "finbert",
-      "timestamp": "2026-01-26T18:18:50.148317",
+      "timestamp": "2026-02-01T19:55:39.702710",
       "config": {
         "learning_rate": 1e-05,
         "batch_size": 16,
@@ -60,41 +60,109 @@
       },
       "training": {
         "total_epochs": 5,
-        "best_epoch": 4,
-        "best_val_loss": 0.18769210407679732,
-        "training_time_minutes": 6.23
+        "best_epoch": 2,
+        "best_val_loss": 0.13520687660484604,
+        "training_time_minutes": 10.99
       },
       "results": {
-        "test_accuracy": 0.9594594594594594,
-        "test_precision": 0.9605596929292112,
-        "test_recall": 0.9594594594594594,
-        "test_f1_weighted": 0.9597691128975813,
-        "test_f1_macro": 0.948722098902454,
+        "test_accuracy": 0.9555984555984556,
+        "test_precision": 0.9602084509369277,
+        "test_recall": 0.9555984555984556,
+        "test_f1_weighted": 0.9562937548192829,
+        "test_f1_macro": 0.9502170609124835,
         "per_class_f1": [
-          0.9375,
-          0.9748427672955975,
-          0.9338235294117647
+          0.953125,
+          0.967948717948718,
+          0.9295774647887324
         ]
       },
       "model_path": "C:\\Users\\seliv\\OneDrive\\Desktop\\Financial Sentiment Analysis\\outputs\\models\\finbert\\best_model.pt"
+    },
+    {
+      "experiment_id": 3,
+      "model": "finbert-base",
+      "timestamp": "2026-02-02T21:30:29.966174",
+      "config": {
+        "approach": "pretrained-direct",
+        "model_checkpoint": "ProsusAI/finbert",
+        "fine_tuned": false,
+        "label_remapping": "FinBERT(0=pos,1=neg,2=neu) -> Project(0=neg,1=neu,2=pos)"
+      },
+      "results": {
+        "test_accuracy": 0.9478764478764479,
+        "test_precision": 0.9517447899026846,
+        "test_recall": 0.9478764478764479,
+        "test_f1_weighted": 0.9486296279218597,
+        "test_f1_macro": 0.9354457295821416,
+        "per_class_f1": [
+          0.9172932330827067,
+          0.9648562300319489,
+          0.924187725631769
+        ]
+      }
+    },
+    {
+      "experiment_id": 4,
+      "model": "roberta-zero-shot",
+      "timestamp": "2026-02-02T21:30:29.966258",
+      "config": {
+        "approach": "zero-shot-classification",
+        "model_checkpoint": "facebook/bart-large-mnli",
+        "fine_tuned": false,
+        "candidate_labels": [
+          "negative",
+          "neutral",
+          "positive"
+        ]
+      },
+      "results": {
+        "test_accuracy": 0.3996138996138996,
+        "test_precision": 0.7669875037748783,
+        "test_recall": 0.3996138996138996,
+        "test_f1_weighted": 0.2730662910804621,
+        "test_f1_macro": 0.41478067112626765,
+        "per_class_f1": [
+          0.6294416243654822,
+          0.10588235294117647,
+          0.5090180360721442
+        ]
+      }
     }
   ],
   "comparison": {
     "winner": "FinBERT",
-    "improvement_percent": 1.26,
+    "improvement_percent": 4.65,
     "metrics_comparison": {
       "accuracy": {
-        "roberta": 0.9478764478764479,
-        "finbert": 0.9594594594594594
+        "roberta": 0.9111969111969112,
+        "finbert": 0.9555984555984556
       },
       "f1_weighted": {
-        "roberta": 0.9478413696088114,
-        "finbert": 0.9597691128975813
+        "roberta": 0.9138347971775064,
+        "finbert": 0.9562937548192829
       },
       "f1_macro": {
-        "roberta": 0.9365447727846749,
-        "finbert": 0.948722098902454
+        "roberta": 0.9092724045131786,
+        "finbert": 0.9502170609124835
       }
+    }
+  },
+  "baseline_comparison": {
+    "finbert_base_vs_finetuned": {
+      "base_accuracy": 0.9478764478764479,
+      "finetuned_accuracy": 0.9555984555984556,
+      "accuracy_improvement": 0.007722007722007707,
+      "base_f1_weighted": 0.9486296279218597,
+      "finetuned_f1_weighted": 0.9562937548192829,
+      "f1_improvement": 0.00766412689742324
+    },
+    "roberta_zs_vs_finetuned": {
+      "base_accuracy": 0.3996138996138996,
+      "finetuned_accuracy": 0.9111969111969112,
+      "accuracy_improvement": 0.5115830115830116,
+      "base_f1_weighted": 0.2730662910804621,
+      "finetuned_f1_weighted": 0.9138347971775064,
+      "f1_improvement": 0.6407685060970443
     }
   }
 }

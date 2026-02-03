@@ -10,8 +10,10 @@ from src.data.dataset import (
     display_batch_example,
     save_splits,
     load_splits,
+    load_balanced_splits,
     get_class_weights,
 )
+from src.data.augmentor import FinancialDataAugmentor
 
 __all__ = [
     # Part 1: Data loading and analysis
@@ -26,5 +28,8 @@ __all__ = [
     "display_batch_example",
     "save_splits",
     "load_splits",
+    "load_balanced_splits",
     "get_class_weights",
+    # Part 2a: Data augmentation
+    "FinancialDataAugmentor",
 ]

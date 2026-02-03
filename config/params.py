@@ -96,3 +96,30 @@ NUM_WORKERS: int = 2  # Worker processes for data loading
 LABEL_LIST: List[str] = ['negative', 'neutral', 'positive']
 LABEL2ID: Dict[str, int] = {label: idx for idx, label in enumerate(LABEL_LIST)}
 ID2LABEL: Dict[int, str] = {idx: label for idx, label in enumerate(LABEL_LIST)}
+
+# ==============================================================================
+# Part 2a: Data Augmentation Configuration
+# ==============================================================================
+
+# Augmentation techniques to apply
+AUGMENTATION_TECHNIQUES: List[str] = [
+    "synonym",
+    "insert",
+    "delete",
+    "back_translate",
+]
+
+# Back-translation model pairs (English -> X -> English)
+BACK_TRANSLATION_SRC_MODEL: str = "Helsinki-NLP/opus-mt-en-de"
+BACK_TRANSLATION_TGT_MODEL: str = "Helsinki-NLP/opus-mt-de-en"
+
+# Maximum fraction of deficit to fill with template-generated sentences
+TEMPLATE_MAX_RATIO: float = 0.15
+
+# nlpaug parameters
+AUGMENT_SYNONYM_TOP_K: int = 5
+AUGMENT_INSERT_TOP_K: int = 5
+AUGMENT_DELETE_MIN_TOKENS: int = 4
+
+# External dataset for additional samples
+TWITTER_FINANCIAL_DATASET: str = "zeroshot/twitter-financial-news-sentiment"

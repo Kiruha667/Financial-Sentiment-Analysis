@@ -14,6 +14,10 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 SPLITS_DIR = DATA_DIR / "splits"
+AUGMENTED_DATA_DIR = DATA_DIR / "augmented"
+
+# Augmented dataset path
+AUGMENTED_TRAIN_CSV = AUGMENTED_DATA_DIR / "train_balanced.csv"
 
 # Output directories
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
@@ -63,6 +67,7 @@ def ensure_directories() -> None:
         REPORTS_DIR,
         LOGS_DIR,
         MODELS_DIR,
+        AUGMENTED_DATA_DIR,
     ]
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)

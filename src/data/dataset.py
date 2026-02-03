@@ -350,6 +350,46 @@ def load_splits(splits_dir: str = 'data/splits') -> Tuple[pd.DataFrame, pd.DataF
     return train_df, val_df, test_df
 
 
+def load_balanced_splits(
+    splits_dir: str = 'data/splits',
+    augmented_train_path: str = 'data/augmented/train_balanced.csv',
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Load splits with the balanced (augmented) training set.
+
+    The validation and test sets come from the original splits directory.
+    The training set is loaded from the augmented CSV.
+
+    Args:
+        splits_dir: Directory containing original val.csv and test.csv.
+        augmented_train_path: Path to balanced training CSV.
+
+    Returns:
+        Tuple of (balanced_train_df, val_df, test_df).
+
+    Raises:
+        FileNotFoundError: If any required file is missing.
+    """
+    augmented_path = Path(augmented_train_path)
+    if not augmented_path.exists():
+        raise FileNotFoundError(
+            f"Balanced training set not found at {augmented_path}. "
+            "Run the augmentation notebook (03a) first."
+        )
+
+    splits_path = Path(splits_dir)
+    train_df = pd.read_csv(augmented_path)
+    val_df = pd.read_csv(splits_path / 'val.csv')
+    test_df = pd.read_csv(splits_path / 'test.csv')
+
+    logger.info(f"Loaded balanced splits:")
+    logger.info(f"  train (balanced): {len(train_df)} samples")
+    logger.info(f"  val:              {len(val_df)} samples")
+    logger.info(f"  test:             {len(test_df)} samples")
+
+    return train_df, val_df, test_df
+
+
 def get_class_weights(labels: List[int], num_classes: int = 3) -> torch.Tensor:
     """
     Calculate class weights for imbalanced dataset.
