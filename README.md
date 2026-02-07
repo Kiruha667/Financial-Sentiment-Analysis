@@ -93,6 +93,15 @@ jupyter notebook notebooks/03_xlm_roberta_training.ipynb
 - Tests zero-shot transfer to Spanish
 - Interactive demo for multilingual inference
 
+**Part 4: LLM Evaluation (Qwen2.5-3B)**
+```bash
+jupyter notebook notebooks/04_llm_evaluation.ipynb
+```
+- Evaluates a local LLM (Qwen2.5-3B via Ollama) on the same test set
+- Zero-shot and few-shot prompting approaches
+- Compares LLM performance against all fine-tuned transformer models
+- Requires: `ollama serve` + `ollama pull qwen2.5:3b`
+
 ### Using Trained Models for Inference
 
 ```python
@@ -147,7 +156,8 @@ financial-sentiment-analysis/
 │   ├── 01_data_analysis.ipynb         # Exploratory data analysis
 │   ├── 02_model_training.ipynb        # Model training and evaluation
 │   ├── 03_xlm_roberta_training.ipynb  # Multilingual model training
-│   └── 03a_data_augmentation.ipynb    # Dataset balancing via augmentation
+│   ├── 03a_data_augmentation.ipynb    # Dataset balancing via augmentation
+│   └── 04_llm_evaluation.ipynb        # LLM evaluation (Qwen2.5-3B via Ollama)
 │
 ├── src/
 │   ├── data/
@@ -365,6 +375,37 @@ FinBERT's pre-trained sentiment head already achieves 94.8% accuracy on financia
 ![Base vs Fine-tuned Comparison](outputs/figures/multi_model_comparison.png)
 
 ![Per-Class F1 All Models](outputs/figures/per_class_f1_all_models.png)
+
+### LLM Evaluation (Qwen2.5-3B)
+
+To assess how a general-purpose local LLM compares to fine-tuned transformers, we evaluate Qwen2.5-3B (running via Ollama) on the same 518-sample test set using zero-shot prompting.
+
+| Model | Accuracy | F1 (weighted) | F1 (macro) |
+|-------|----------|---------------|------------|
+| RoBERTa (zero-shot) | 39.96% | 0.273 | 0.415 |
+| Qwen2.5-3B (zero-shot) | 81.85% | 0.800 | 0.781 |
+| RoBERTa (fine-tuned) | 91.12% | 0.914 | 0.909 |
+| FinBERT (base) | 94.79% | 0.949 | 0.935 |
+| **FinBERT (fine-tuned)** | **95.56%** | **0.956** | **0.950** |
+
+Qwen2.5-3B achieves 81.85% accuracy with zero-shot prompting — significantly better than RoBERTa zero-shot (39.96%) but well below fine-tuned models. The main weakness is **positive class recall (44%)**: the LLM tends to classify positive sentences as neutral. Out of 94 errors, 73 (77.7%) are positive→neutral misclassifications. This suggests the model treats subtle financial optimism (e.g. "operating profit rose to EUR 17.5 mn") as factual rather than positive.
+
+#### LLM Per-Class F1
+
+| Class | Qwen2.5-3B | FinBERT (fine-tuned) | Gap |
+|-------|------------|----------------------|-----|
+| Negative | 0.882 | 0.953 | −0.071 |
+| Neutral | 0.871 | 0.968 | −0.097 |
+| Positive | 0.589 | 0.930 | −0.341 |
+
+Inference time: ~22 min for 518 samples (2.5s/sample) vs seconds for fine-tuned models.
+
+![All Models Comparison](outputs/figures/llm_multi_model_comparison.png)
+
+<p align="center">
+  <img src="outputs/figures/llm_confusion_matrix.png" width="45%" />
+  <img src="outputs/figures/llm_per_class.png" width="45%" />
+</p>
 
 ### Cross-lingual Results (XLM-RoBERTa)
 
