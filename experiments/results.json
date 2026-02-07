@@ -127,6 +127,33 @@
           0.5090180360721442
         ]
       }
+    },
+    {
+      "experiment_id": 5,
+      "model": "qwen2.5-3b",
+      "timestamp": "2026-02-03T12:28:34.346593",
+      "config": {
+        "approach": "llm-zero-shot",
+        "model_name": "qwen2.5:3b",
+        "runtime": "ollama-local",
+        "temperature": 0.0,
+        "few_shot": false,
+        "num_examples_per_class": 0
+      },
+      "results": {
+        "test_accuracy": 0.8185328185328186,
+        "test_precision": 0.8332142238392237,
+        "test_recall": 0.8185328185328186,
+        "test_f1_weighted": 0.7997433095699986,
+        "test_f1_macro": 0.7805029226477016,
+        "per_class_f1": [
+          0.8818897637795275,
+          0.8707865168539326,
+          0.5888324873096447
+        ],
+        "unparseable_count": 0,
+        "inference_time_seconds": 1309.5
+      }
     }
   ],
   "comparison": {

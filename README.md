@@ -485,6 +485,42 @@ Both models perform best on the majority class (Neutral) and show slightly lower
 
 ---
 
+## Conclusion
+
+### Hypotheses Validation
+
+| Hypothesis | Statement | Result | Verdict |
+|------------|-----------|--------|---------|
+| **H1** | Fine-tuned transformer achieves macro F1 > 0.85 | FinBERT macro F1 = **0.950**, RoBERTa macro F1 = **0.909** | Confirmed |
+| **H2** | FinBERT outperforms RoBERTa by >= 3% F1 | FinBERT F1 0.950 vs RoBERTa 0.909 (**+4.1% macro F1**) | Confirmed |
+
+### Key Findings
+
+1. **Domain-specific pretraining matters.** FinBERT (95.56% accuracy) outperforms RoBERTa (91.12%) by 4.44 percentage points. Pre-training on financial corpora gives a meaningful advantage for financial sentiment classification.
+
+2. **Fine-tuning value depends on the starting point.** FinBERT's pre-trained sentiment head already achieves 94.79% accuracy without any fine-tuning — task-specific training adds only +0.77%. In contrast, RoBERTa jumps from 39.96% (zero-shot) to 91.12% with fine-tuning (+128% relative gain).
+
+3. **Data augmentation enables training on imbalanced data.** Balancing the training set from 2,417 to 4,506 samples (using PhraseBank 50%-agree, nlpaug, and templates) ensures the model learns all three classes effectively, improving minority class performance.
+
+4. **Small LLMs trail fine-tuned specialists.** Qwen2.5-3B achieves 81.85% accuracy with zero-shot prompting — better than RoBERTa zero-shot (39.96%) but 13.7 points below fine-tuned FinBERT. The main weakness is positive class recall (44%): the LLM tends to classify subtle financial optimism as neutral.
+
+5. **Cross-lingual transfer works.** XLM-RoBERTa trained on English achieves 80% accuracy on Spanish with zero-shot transfer (87.2% transfer efficiency), demonstrating practical potential for multilingual financial NLP.
+
+### Final Model Ranking
+
+| Rank | Model | Accuracy | F1 (macro) | Setup |
+|------|-------|----------|------------|-------|
+| 1 | FinBERT (fine-tuned) | 95.56% | 0.950 | Fine-tuned on balanced data |
+| 2 | FinBERT (base) | 94.79% | 0.935 | No fine-tuning needed |
+| 3 | XLM-RoBERTa | 91.70% | 0.895 | Multilingual, 100+ languages |
+| 4 | RoBERTa (fine-tuned) | 91.12% | 0.909 | General-purpose baseline |
+| 5 | Qwen2.5-3B | 81.85% | 0.781 | Local LLM, zero-shot |
+| 6 | RoBERTa (zero-shot) | 39.96% | 0.415 | No financial knowledge |
+
+The results confirm that for financial sentiment analysis, **domain-specific pretrained models remain the best practical choice** — they are smaller, faster, and more accurate than general-purpose LLMs, while requiring minimal fine-tuning to achieve state-of-the-art performance.
+
+---
+
 ## Troubleshooting
 
 **CUDA out of memory**
